@@ -4,11 +4,11 @@ from tqdm import tqdm
 from langchain.schema import Document
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts import ChatPromptTemplate
-from src.abstracts.abstract_task_strategy import TaskStrategy
-from config.language_detect import returnlang
+from rag_pipeline.src.abstracts.abstract_task_strategy import TaskStrategy
+from rag_pipeline.config.language_detect import returnlang
 from fuzzywuzzy import fuzz
-from src.models.reranker import Reranker
-from config.settings import FUZZY_THRESHOLD, DEFAULT_TOP_K
+from rag_pipeline.src.models.reranker import Reranker
+from rag_pipeline.config.settings import FUZZY_THRESHOLD, DEFAULT_TOP_K
 
 logger = logging.getLogger(__name__)
 

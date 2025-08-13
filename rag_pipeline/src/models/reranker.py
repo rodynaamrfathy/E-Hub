@@ -2,7 +2,8 @@ from sentence_transformers import CrossEncoder
 import logging as logger
 from tqdm import tqdm
 from langchain.schema import Document
-from config.settings import DEFAULT_RERANKER_MODEL, RERANKER_CACHE_DIR
+from rag_pipeline.config.settings import DEFAULT_RERANKER_MODEL, RERANKER_CACHE_DIR
+
 
 class Reranker:
     def __init__(self, model_name=None):

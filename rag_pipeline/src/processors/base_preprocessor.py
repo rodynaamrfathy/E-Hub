@@ -4,7 +4,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import logging
 from tqdm import tqdm
 from abc import ABC, abstractmethod
-from config.settings import DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP, LOG_LEVEL
+from rag_pipeline.config.settings import DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP, LOG_LEVEL
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),

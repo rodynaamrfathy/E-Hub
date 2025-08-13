@@ -1,4 +1,4 @@
-import src.processors.base_preprocessor as BasePreprocessor 
+import rag_pipeline.src.processors.base_preprocessor as BasePreprocessor 
 import json
 from langchain.schema import Document
 import logging

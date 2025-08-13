@@ -1,8 +1,8 @@
-from ..abstracts.abstract_task_strategy import TaskStrategy
+from rag_pipeline.src.abstracts.abstract_task_strategy import TaskStrategy
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.schema import Document
-from config.language_detect import returnlang
+from rag_pipeline.config.language_detect import returnlang
 import re
 import logging
 from tqdm import tqdm

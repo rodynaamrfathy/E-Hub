@@ -1,10 +1,10 @@
-from ..abstracts.abstract_task_strategy import TaskStrategy
+from rag_pipeline.src.abstracts.abstract_task_strategy import TaskStrategy
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
-from config.language_detect import returnlang
-from src.core.chat_history_manager import ConversationHistoryManager
-from config.settings import DEFAULT_TOP_K, DEFAULT_CONVERSATION_HISTORY_LIMIT
+from rag_pipeline.config.language_detect import returnlang
+from rag_pipeline.src.core.chat_history_manager import ConversationHistoryManager
+from rag_pipeline.config.settings import DEFAULT_TOP_K, DEFAULT_CONVERSATION_HISTORY_LIMIT
 import re
 import logging
 from tqdm import tqdm

@@ -4,7 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import logging
 from tqdm import tqdm
-from ..abstracts.abstract_llm import BaseLLM
+from rag_pipeline.src.abstracts.abstract_llm import BaseLLM
 logger = logging.getLogger(__name__)
 
 class OLLAMA_LLM(BaseLLM):

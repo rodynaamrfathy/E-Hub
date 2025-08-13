@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import torch
 from langchain_huggingface import HuggingFaceEmbeddings
-from config.settings import EMBEDDER_CACHE_DIR
+from rag_pipeline.config.settings import EMBEDDER_CACHE_DIR
 
 class Embedder(ABC): 
     def __init__(self, model_name, batch_size):

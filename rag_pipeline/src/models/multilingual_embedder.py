@@ -1,4 +1,4 @@
-from src.abstracts.abstract_embedder import Embedder
+from rag_pipeline.src.abstracts.abstract_embedder import Embedder
 
 import numpy as np
 import logging
