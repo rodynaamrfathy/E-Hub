@@ -9,3 +9,5 @@ rag_pipeline/data
 rag_pipeline/vectorstore
 rag_pipeline/document_processing.log
 rag_pipeline/cache
+bot.py
+logs/document_processing.log
