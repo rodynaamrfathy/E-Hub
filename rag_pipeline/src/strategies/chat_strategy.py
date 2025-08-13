@@ -33,7 +33,6 @@ class ChattingStrategy(TaskStrategy):
         self._build_chain()
         
         logger.info("✅ ChattingStrategy initialized successfully")
-        self.reranker = Reranker()
         logger.info("✅ Reranker initialized successfully")
     def format_docs(self, docs):
         """Format retrieved documents for context."""
