@@ -1,4 +1,5 @@
-from ..abstracts.abstract_vector_db import VectorStoreBase
+from rag_pipeline.src.abstracts.abstract_vector_db import VectorStoreBase
+from rag_pipeline.src.models.reranker import Reranker  
 import faiss
 import numpy as np
 from langchain.schema import Document
@@ -11,7 +12,8 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 class Fais_VS(VectorStoreBase):
-    def __init__(self, embedder_model=None):
+    def __init__(self, embedder_model=None, reranker_model=None):
+        """Initialize FAISS vector store with optional reranking capabilities."""
         logger.info("🗄️ Initializing FAISS VectorStore...")
         
         self.index = None
@@ -20,7 +22,8 @@ class Fais_VS(VectorStoreBase):
         self.total_vectors = 0
         self.index_type = "IndexFlatIP"
         self.embedder_model = embedder_model
-        
+        self.enable_reranking = True
+        self.reranker = Reranker()
         # Enhanced functionality attributes
         self.docstore = None
         self.index_to_docstore_id = None
@@ -32,7 +35,7 @@ class Fais_VS(VectorStoreBase):
             logger.info("⚠️ FAISS VectorStore initialized without embedder model")
     
     def create_vector_store(self, documents, embedder_model=None):
-        """Create vector store from documents"""
+        """Create FAISS vector store from a list of documents."""
         logger.info(f"🔧 Creating vector store from {len(documents)} documents...")
         
         if embedder_model:
@@ -82,10 +85,7 @@ class Fais_VS(VectorStoreBase):
         return self
     
     def create_vectorstore(self, docs, normalize_embeddings=True):
-        """
-        Create a FAISS vector store from a list of Document objects.
-        Each document should have metadata like pdf_id, chunk_id, etc.
-        """
+        """Create enhanced FAISS vector store from Document objects with metadata."""
         logger.info(f"🚀 Creating enhanced vectorstore from {len(docs)} Document objects...")
         logger.info(f"⚙️ Normalization: {'enabled' if normalize_embeddings else 'disabled'}")
         
@@ -119,7 +119,7 @@ class Fais_VS(VectorStoreBase):
         # Normalize embeddings for cosine similarity if requested
         if normalize_embeddings:
             logger.info("🎯 Normalizing embeddings for cosine similarity...")
-            with tqdm(total=1, desc="📐 Normalizing", unit="operation") as pbar:
+            with tqdm(total=1, desc="🔍 Normalizing", unit="operation") as pbar:
                 faiss.normalize_L2(embeddings)
                 pbar.update(1)
         
@@ -150,16 +150,7 @@ class Fais_VS(VectorStoreBase):
         return self
     
     def get_relevant_documents(self, query, top_k=5):
-        """Main retriever function - returns LangChain Document objects"""
-        logger.info(f"🔍 Retrieving {top_k} relevant documents for query: '{query[:50]}...'")
-        
-        if self.index is None:
-            logger.error("❌ Index not created")
-            raise ValueError("Index not created. Call create_vector_store() or create_vectorstore() first.")
-        
-        if not self.embedder_model:
-            logger.error("❌ No embedder model available")
-            raise ValueError("Embedder model not set")
+        """Search and retrieve the most relevant documents for a query with optional reranking."""
         
         # Get query embedding
         logger.debug("🧠 Generating query embedding...")
@@ -178,24 +169,43 @@ class Fais_VS(VectorStoreBase):
                 query_embedding = self.embedder_model.batch_embed(query)
             pbar.update(1)
         
-        # Search and format results
+        # Initial vector search
         if self.docstore is not None:
             logger.debug("🔍 Using enhanced docstore-based retrieval...")
-            results = self._search_with_docstore(query_embedding, top_k)
+            candidates = self._search_with_docstore(query_embedding, initial_k=5)
         else:
             logger.debug("🔍 Using chunk-based retrieval...")
-            results = self._search_chunks(query_embedding, top_k)
+            candidates = self._search_chunks(query_embedding, initial_k=5)
             # Convert to Document objects for consistency
-            results = [
+            candidates = [
                 Document(page_content=res['text'], metadata={"similarity": res['similarity']})
-                for res in results
+                for res in candidates
             ]
+
+        logger.info(f"🎯 Applying reranking to {len(candidates)} candidates...")
+        candidates = self.reranker.rerank_chunks(query, candidates)
+            
+        # Update metadata 
+        for doc in candidates:
+            if doc.metadata:
+                doc.metadata["reranked"] = True
+
+        # Return top_k results
+        results = candidates[:top_k]
         
-        logger.info(f"✅ Retrieved {len(results)} relevant documents")
+        rerank_status = "with reranking" 
+        logger.info(f"✅ Retrieved {len(results)} relevant documents {rerank_status}")
+        
         return results
+    def set_embedder_model(self, embedder_model):
+        """Set or update the embedder model."""
+        logger.info("🔧 Setting embedder model...")
+        self.embedder_model = embedder_model
+        logger.info("✅ Embedder model updated successfully")
+        return self
     
     def _search_with_docstore(self, query_embedding, top_k=5):
-        """Enhanced search function using docstore - returns Document objects"""
+        """Search using enhanced docstore and return Document objects."""
         logger.debug(f"🔍 Searching with docstore for top_{top_k} results...")
         
         # Ensure query_embedding is properly shaped
@@ -245,7 +255,7 @@ class Fais_VS(VectorStoreBase):
         return documents
     
     def _search_chunks(self, query_embedding, top_k=5):
-        """Internal search function - returns raw results"""
+        """Search text chunks and return raw results with similarity scores."""
         logger.debug(f"🔍 Searching chunks for top_{top_k} results...")
         
         # Ensure query_embedding is properly shaped
@@ -284,19 +294,15 @@ class Fais_VS(VectorStoreBase):
                     'chunk_id': faiss_idx,
                     'text': self.chunks_dict[faiss_idx],
                     'distance': distance,
-                    'similarity': float(distance)  # For cosine similarity, higher is better
+                    'similarity': float(distance) 
                 })
         
         logger.debug(f"✅ Formatted {len(formatted)} chunk results")
         return formatted
     
-    def search_raw(self, query_embedding, top_k=5):
-        """Search with raw embedding input - useful for advanced use cases"""
-        logger.debug(f"🔍 Raw search for top_{top_k} results...")
-        return self._search_chunks(query_embedding, top_k)
-    
+
     def save_index(self, file_path):
-        """Save both FAISS index and metadata"""
+        """Save FAISS index and metadata to disk."""
         logger.info(f"💾 Saving FAISS index to {file_path}...")
         file_path=f'vectorstores/{file_path}'
         if self.index is None:
@@ -309,7 +315,7 @@ class Fais_VS(VectorStoreBase):
             faiss.write_index(self.index, f"{file_path}.faiss")
             pbar.update(1)
         
-        # Save metadata (enhanced to include new attributes)
+        # Save metadata (enhanced to include reranking settings)
         logger.info("📋 Preparing metadata for saving...")
         metadata = {
             'chunks_dict': self.chunks_dict,
@@ -318,7 +324,8 @@ class Fais_VS(VectorStoreBase):
             'index_type': self.index_type,
             'docstore': self.docstore,
             'index_to_docstore_id': self.index_to_docstore_id,
-            'documents': self.documents
+            'documents': self.documents,
+            'enable_reranking': self.enable_reranking
         }
         
         logger.info("💾 Saving metadata file...")
@@ -331,7 +338,7 @@ class Fais_VS(VectorStoreBase):
         print(f"[FAISS] Index and metadata saved to {file_path}")
     
     def load_index(self, file_path, embedder_model=None):
-        """Load both FAISS index and metadata"""
+        """Load FAISS index and metadata from disk."""
         file_path=f'vectorstores/{file_path}'
         logger.info(f"📂 Loading FAISS index from {file_path}...")
         
@@ -363,46 +370,24 @@ class Fais_VS(VectorStoreBase):
         self.dimension = metadata['dimension']
         self.total_vectors = metadata['total_vectors']
         self.index_type = metadata['index_type']
-        
-        # Load enhanced attributes if they exist (backward compatibility)
-        self.docstore = metadata.get('docstore', None)
-        self.index_to_docstore_id = metadata.get('index_to_docstore_id', None)
-        self.documents = metadata.get('documents', None)
-        
+    
+    
         # Set embedder model if provided
         if embedder_model:
             logger.info("🔧 Setting embedder model...")
             self.embedder_model = embedder_model
         
         enhanced_mode = "enabled" if self.docstore is not None else "disabled"
+        reranking_status = "enabled" if self.enable_reranking else "disabled"
+        
         logger.info(f"✅ Index loaded successfully: {self.total_vectors} vectors, dim {self.dimension}")
         logger.info(f"🔧 Enhanced docstore mode: {enhanced_mode}")
+        logger.info(f"🎯 Reranking: {reranking_status}")
         
         print(f"[FAISS] Index loaded: {self.total_vectors} vectors, dim {self.dimension}")
         if self.docstore is not None:
             print(f"[FAISS] Enhanced docstore mode enabled")
+        if self.enable_reranking:
+            print(f"[FAISS] Reranking enabled")
         
         return self
-    
-    def set_embedder_model(self, embedder_model):
-        """Set or update the embedder model"""
-        logger.info("🔧 Setting embedder model...")
-        self.embedder_model = embedder_model
-        logger.info("✅ Embedder model updated successfully")
-        return self
-    
-    def get_stats(self):
-        """Get index statistics"""
-        logger.debug("📊 Gathering vectorstore statistics...")
-        
-        stats = {
-            'total_vectors': self.total_vectors,
-            'dimension': self.dimension,
-            'index_type': self.index_type,
-            'has_embedder': self.embedder_model is not None,
-            'has_docstore': self.docstore is not None,
-            'has_documents': self.documents is not None
-        }
-        
-        logger.debug(f"📊 Statistics: {stats}")
-        return stats
