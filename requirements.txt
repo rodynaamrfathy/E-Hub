@@ -1,0 +1,17 @@
+sentence-transformers
+numpy
+langchain
+langchain-core
+langchain-community
+langchain-huggingface
+faiss-cpu
+transformers
+torch
+tqdm
+flask
+flask-cors
+langdetect
+fuzzywuzzy
+python-levenshtein
+langchain_ollama
+threading
