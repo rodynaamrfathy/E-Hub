@@ -8,7 +8,7 @@ from rag_pipeline.config.settings import DEFAULT_TOP_K, DEFAULT_CONVERSATION_HIS
 import re
 import logging
 from tqdm import tqdm
-from rag_pipeline.src.models.reranker import Reranker
+
 
 # Configure logging 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,6 @@ class ChattingStrategy(TaskStrategy):
         self._build_chain()
         
         logger.info("✅ ChattingStrategy initialized successfully")
-        logger.info("✅ Reranker initialized successfully")
     def format_docs(self, docs):
         """Format retrieved documents for context."""
         logger.debug(f"📝 Formatting {len(docs)} documents for context...")
