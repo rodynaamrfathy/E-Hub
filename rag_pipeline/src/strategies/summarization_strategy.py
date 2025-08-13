@@ -164,11 +164,7 @@ class Summarization_Rag_Strategy(TaskStrategy):
         self.retriever = retriever
         self.fuzzy_threshold = fuzzy_threshold
         self.top_k = top_k
-        
-        # Import and initialize reranker
 
-        self.reranker = Reranker()
-        logger.info("✅ Reranker initialized successfully")
         logger.info("✅ Summarization_Rag_Strategy initialized successfully")
 
     def _create_language_aware_prompt(self, detected_lang):
@@ -258,13 +254,12 @@ class Summarization_Rag_Strategy(TaskStrategy):
         logger.info(f"🔎 Finding {top_k} chunks similar to seed chunk...")
         
         try:
-            # Retrieve more chunks for reranking if reranker is available
-            retrieve_k = top_k * 2 if self.reranker else top_k + 1
+
             
             # Use the seed chunk's content as query for similarity search
             similar_chunks = self.retriever.get_relevant_documents(
                 query=seed_chunk.page_content,
-                top_k=retrieve_k
+                top_k=5
             )
             
             # Remove the seed chunk from results if present (avoid duplication)
@@ -279,13 +274,7 @@ class Summarization_Rag_Strategy(TaskStrategy):
                 elif len(filtered_chunks) == 0:
                     # Keep the first occurrence (in case seed chunk is the most similar)
                     filtered_chunks.append(chunk)
-            
-            # Apply reranking if we have chunks to rerank
-            if len(filtered_chunks) > 1:
-                logger.info("🔄 Applying reranking to retrieved chunks...")
-                filtered_chunks = self.reranker.rerank_chunks(seed_chunk.page_content, filtered_chunks)
-                logger.info("✅ Reranking completed successfully")
-            
+    
             # Ensure we have the right number of chunks
             final_chunks = filtered_chunks[:top_k]
             
