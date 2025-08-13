@@ -11,3 +11,4 @@ rag_pipeline/document_processing.log
 rag_pipeline/cache
 bot.py
 logs/document_processing.log
+__pycache__
