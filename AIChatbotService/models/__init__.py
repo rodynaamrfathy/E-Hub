@@ -1,10 +1,7 @@
 from .conversation import Conversation
 from .message import Message
 from .base import Base
+from .embedding import Embedding
 
-__all__ = ["Conversation", "Message", "Base"]
+__all__ = ["Base", "Conversation", "Message", "Embedding"]
 
-# AIChatbotService/models/base.py
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()

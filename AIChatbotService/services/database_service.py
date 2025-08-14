@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
-from AIChatbotService.models import Conversation, Message, Base
+from AIChatbotService.models import Conversation, Message, Base, Embedding
 from AIChatbotService.database import db_manager
 import uuid
 

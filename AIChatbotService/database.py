@@ -52,10 +52,9 @@ class DatabaseManager:
         )
         
     async def create_tables(self):
-        from AIChatbotService.models.conversation import Base as ConversationBase
-        from AIChatbotService.models.message import Base as MessageBase
+        from AIChatbotService.models import Base  
         async with self.engine.begin() as conn:
-            await conn.run_sync(ConversationBase.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)
             
     def get_session(self):
         if not self.async_session_factory:
