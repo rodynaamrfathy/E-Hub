@@ -1,6 +1,7 @@
 # config/settings.py
 import os
 from pathlib import Path
+import torch
 
 # Base paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -47,3 +48,6 @@ DEFAULT_RERANKER_MODEL = os.getenv("RERANKER_MODEL", "BAAI/bge-reranker-v2-m3")
 
 # Conversation settings
 DEFAULT_CONVERSATION_HISTORY_LIMIT = int(os.getenv("CONVERSATION_HISTORY_LIMIT", "6"))
+
+# DEVICE
+DEVICE = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
