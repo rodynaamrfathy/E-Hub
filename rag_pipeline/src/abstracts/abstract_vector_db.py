@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class VectorStoreBase(ABC):
     @abstractmethod
-    def create_vector_store(self, documents, embedder_model):
+    def create_vectorstore(self, documents, embedder_model):
         pass
     
     @abstractmethod

@@ -9,8 +9,8 @@ from rag_pipeline.config.settings import (
 )
 
 load_dotenv()
-
-connection_string = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+DATABASE_URL='postgresql://neondb_owner:npg_YhJoUDEH61TF@ep-empty-poetry-adnc151z-pooler.c-2.us-east-1.aws.neon.tech/chatbot_service?sslmode=require&channel_binding=require'
+connection_string = DATABASE_URL
 
 multilingual_embedder = MultilingualEmbedder(
             model_name=DEFAULT_EMBEDDING_MODEL, 
@@ -32,7 +32,7 @@ test_docs = [
 vector_store.create_vectorstore(test_docs)
 
 # Test search
-results = vector_store.get_relevant_documents("machine learning", top_k=2)
+results = vector_store.get_relevant_documents("machine learning")
 print(f"Found {len(results)} results")
 
 # Clean up

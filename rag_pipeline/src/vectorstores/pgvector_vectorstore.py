@@ -175,7 +175,6 @@ class PgVector_VS(VectorStoreBase):
         print(f"[pgvector] Normalization: {'enabled' if normalize_embeddings else 'disabled'}")
         
         return self
-
     def get_relevant_documents(self, query, top_k=5):
         """Search and retrieve the most relevant documents for a query with optional reranking."""
         
@@ -196,19 +195,19 @@ class PgVector_VS(VectorStoreBase):
             pbar.update(1)
         
         # Ensure query_embedding is numpy array
-        query_embedding = np.array(query_embedding).astype("float32")
+        query_embedding = np.array(query_embedding, dtype="float32").tolist()
         
         # Search for similar vectors
         logger.debug("🔍 Searching for similar documents...")
         with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Use cosine similarity for search (1 - cosine_distance for similarity score)
+            # Use cosine similarity with explicit cast to pgvector
             cur.execute(f"""
                 SELECT id, content, metadata, 
-                       1 - (embedding <=> %s) as similarity
+                    1 - (embedding <=> %s::vector) as similarity
                 FROM {self.table_name}
-                ORDER BY embedding <=> %s
+                ORDER BY embedding <=> %s::vector
                 LIMIT %s
-            """, (query_embedding.tolist(), query_embedding.tolist(), top_k * 2))  # Get more candidates for reranking
+            """, (query_embedding, query_embedding, top_k * 2))  # Get more candidates for reranking
             
             results = cur.fetchall()
         
@@ -226,18 +225,15 @@ class PgVector_VS(VectorStoreBase):
             candidates.append(doc)
         
         # Apply reranking if enabled
-        if self.enable_reranking and len(candidates) > 0:
+        if self.enable_reranking and candidates:
             logger.info(f"🎯 Applying reranking to {len(candidates)} candidates...")
             candidates = self.reranker.rerank_chunks(query, candidates)
-            
-            # Update metadata 
             for doc in candidates:
                 if doc.metadata:
                     doc.metadata["reranked"] = True
         
         # Return top_k results
         results = candidates[:top_k]
-        
         rerank_status = "with reranking" if self.enable_reranking else "without reranking"
         logger.info(f"✅ Retrieved {len(results)} relevant documents {rerank_status}")
         

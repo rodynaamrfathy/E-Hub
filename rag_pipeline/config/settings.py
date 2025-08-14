@@ -19,6 +19,10 @@ DEFAULT_CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
 OLLAMA_MODELS = {
     "qwen3": os.getenv("QWEN3_MODEL", "qwen3:8b")
 }
+HF_MODELS = {
+    "qwen3": os.getenv("QWEN3_MODEL", "Qwen/Qwen3-8B"),
+    "qwen0.6" : os.getenv("QWEN0.6_MODEL", "Qwen/Qwen3-0.6B"),
+}
 
 # API Server configuration
 API_HOST = os.getenv("API_HOST", "0.0.0.0")

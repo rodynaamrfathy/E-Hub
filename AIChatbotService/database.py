@@ -30,7 +30,7 @@ class DatabaseManager:
         self.async_session_factory = None
         
     async def initialize(self):
-        database_url = os.getenv('DATABASE_URL')
+        database_url = 'postgresql://neondb_owner:npg_YhJoUDEH61TF@ep-empty-poetry-adnc151z-pooler.c-2.us-east-1.aws.neon.tech/chatbot_service?sslmode=require&channel_binding=require'
         if not database_url:
             raise ValueError("DATABASE_URL environment variable is not set")
         
