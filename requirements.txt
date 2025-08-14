@@ -16,3 +16,6 @@ python-levenshtein
 langchain_ollama
 threading
 pypdf
+psycopg2-binary 
+pgvector 
+sqlalchemy
