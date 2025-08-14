@@ -2,7 +2,7 @@ from typing import List, Optional
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 from AIChatbotService.models import Conversation, Message, Base
-from database import db_manager
+from AIChatbotService.database import db_manager
 import uuid
 
 class DatabaseService:
@@ -40,13 +40,13 @@ class DatabaseService:
             result = await session.execute(stmt)
             return result.scalars().all()
     
-    async def add_message(self, conversation_id: str, message_type: str, content: str, metadata: dict = None) -> Message:
+    async def add_message(self, conversation_id: str, message_type: str, content: str, msg_metadata: dict = None) -> Message:
         """Add a message to a conversation"""
         async with db_manager.get_session() as session:
             message = Message(
                 message_type=message_type,
                 content=content,
-                metadata=metadata or {}
+                msg_metadata=msg_metadata or {}
             )
             message.conversation_id = uuid.UUID(conversation_id)
             
@@ -113,14 +113,14 @@ async def example_usage():
             conversation_id=str(conversation.conversation_id),
             message_type="user",
             content="Hello, how are you?",
-            metadata={"timestamp": "2024-01-01T10:00:00Z"}
+            msg_metadata={"timestamp": "2024-01-01T10:00:00Z"}
         )
         
         bot_message = await service.add_message(
             conversation_id=str(conversation.conversation_id),
             message_type="assistant",
             content="I'm doing well, thank you for asking!",
-            metadata={"model": "claude-3", "tokens": 50}
+            msg_metadata={"model": "claude-3", "tokens": 50}
         )
         
         # Get conversation with messages

@@ -22,7 +22,7 @@ class Message(Base):
     )
     message_type = Column(String(20), nullable=False)
     content = Column(Text, nullable=False)
-    metadata = Column(JSONB, default=dict, server_default='{}')
+    msg_metadata = Column(JSONB, default=dict, server_default='{}')
     created_at = Column(
         DateTime(timezone=True), 
         default=func.current_timestamp(),
@@ -32,10 +32,10 @@ class Message(Base):
     # Relationship to conversation
     conversation = relationship("Conversation", back_populates="messages")
 
-    def __init__(self, message_type, content, metadata=None):
+    def __init__(self, message_type, content, msg_metadata=None):
         self.message_type = message_type
         self.content = content
-        self.metadata = metadata if metadata is not None else {}
+        self.msg_metadata = msg_metadata if msg_metadata is not None else {}
 
     def __repr__(self):
         return f"<Message(message_id={self.message_id}, conversation_id={self.conversation_id}, message_type={self.message_type})>"
