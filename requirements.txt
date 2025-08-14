@@ -19,3 +19,4 @@ pypdf
 psycopg2-binary 
 pgvector 
 sqlalchemy
+dotenv
