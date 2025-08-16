@@ -15,3 +15,4 @@ logs/document_processing.log
 .vscode
 logs
 json
+*.docx
