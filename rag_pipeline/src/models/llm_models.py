@@ -73,9 +73,7 @@ class Hugging_Face_LLM(LLM):
         )
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
-            cache_dir=self.cache_folder,
-            torch_dtype=DEVICE,
-            device_map="auto"
+            cache_dir=self.cache_folder
         )
 
     @property
