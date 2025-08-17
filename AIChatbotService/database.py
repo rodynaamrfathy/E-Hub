@@ -59,7 +59,7 @@ class DatabaseManager:
             
     def get_session(self):
         if not self.async_session_factory:
-            self.initialize()
+            raise RuntimeError("Database not initialized. Call await db_manager.initialize() first.")
         return self.async_session_factory()
 
         
