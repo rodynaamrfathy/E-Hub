@@ -15,7 +15,7 @@ class Conversation(Base):
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
-    user_id = Column(UUID(as_uuid=True), ForeignKey("public.users.user_id", ondelete="CASCADE"))
+    user_id = Column(UUID(as_uuid=True))
     title = Column(Text)
     created_at = Column(
         DateTime(timezone=True),
