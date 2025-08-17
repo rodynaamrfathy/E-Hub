@@ -1,6 +1,6 @@
 # Key Features
 
-## Multilingual Support:
+### Multilingual Support:
 + Automatic language detection
 + Language-specific prompt formatting
 ### RAG Pipeline:

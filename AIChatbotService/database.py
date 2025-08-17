@@ -50,7 +50,8 @@ class DatabaseManager:
             class_=AsyncSession,
             expire_on_commit=False
         )
-        
+
+    # goes through all ORM classes that inherit from Base
     async def create_tables(self):
         from AIChatbotService.models import Base  
         async with self.engine.begin() as conn:
