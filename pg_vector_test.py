@@ -42,31 +42,35 @@ def setup_logging():
     return logging.getLogger(__name__)
 
 
-
-def load_and_process_documents(logger,files_paths):
-    """Load and process  documents into chunks."""
+def load_and_process_documents(logger, files_paths):
+    """Load and process documents into chunks."""
     logger.info("📁 Loading documents...")
-    paths = [files_paths]
+
+    paths = files_paths if isinstance(files_paths, list) else [files_paths]
+
     docs = JSONPreprocessor()
-
     data = docs.process_documents_from_files(paths)
-
 
     logger.info(f"✅ Loaded {len(data)} documents")
 
     logger.info("📄 Creating individual documents...")
-    individual_documents = [
-        Document(page_content=pdf.page_content, metadata={"pdf_id": i})
-        for i, pdf in enumerate(tqdm(data, desc="🔨 Creating documents", unit="doc"))
-        if pdf.page_content
-    ]
+
+    individual_documents = []
+    for i, pdf in enumerate(tqdm(data, desc="🔨 Creating documents", unit="doc", leave=True, dynamic_ncols=True)):
+        if pdf.page_content:
+            # Match file name to document index if possible
+            file_name = os.path.basename(paths[i]) if i < len(paths) else "unknown"
+            individual_documents.append(
+                Document(page_content=pdf.page_content, metadata={"pdf_id": i, "file_name": file_name})
+            )
+
     logger.info(f"✅ Created {len(individual_documents)} individual documents")
 
     logger.info("✂️ Chunking documents...")
     chunked_docs = docs.chunk_documents(individual_documents)
     logger.info(f"✅ Document chunking completed - {len(chunked_docs)} chunks created")
 
-    return chunked_docs , individual_documents
+    return chunked_docs, individual_documents
 
 async def example_usage():
     """Fixed example usage focusing on vector store functionality"""
@@ -87,10 +91,11 @@ async def example_usage():
 
     
     try:
-        pipeline_start_time = time.time()
+
         logger = setup_logging()
         logger.info("🚀 Starting document processing pipeline...")
-        chunked_docs , individual_documents = load_and_process_documents(logger,'/Users/maryamsaad/Documents/app/data/PMS Market Research.pdf')
+        file_paths=['/Users/maryamsaad/Documents/app/data/PMS Market Research.pdf','/Users/maryamsaad/Documents/app/data/Market Research Report.pdf']
+        chunked_docs , individual_documents = load_and_process_documents(logger,file_paths)
         print("Creating vector store...")
         # Create vector store (this handles both embedding generation and storage)
         vector_store.create_vectorstore(individual_documents)

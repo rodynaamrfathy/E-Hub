@@ -4,6 +4,7 @@ import numpy as np
 from langchain.schema import Document
 import pickle
 import json
+from more_itertools import chunked
 import logging
 from tqdm import tqdm
 from rag_pipeline.src.abstracts.abstract_vector_db import VectorStoreBase
@@ -144,10 +145,10 @@ class PgVector_VS(VectorStoreBase):
         self.dimension = embeddings.shape[1]
         self._add_vector_column(self.dimension)
         
-        # Clear existing data
-        with self.conn.cursor() as cur:
-            cur.execute(f"TRUNCATE TABLE {self.table_name}")
-            logger.info("🗑️ Cleared existing data")
+        # # Clear existing data
+        # with self.conn.cursor() as cur:
+        #     cur.execute(f"TRUNCATE TABLE {self.table_name}")
+        #     logger.info("🗑️ Cleared existing data")
         
         # Insert documents and embeddings
         logger.info("💾 Inserting documents into database...")
@@ -224,14 +225,11 @@ class PgVector_VS(VectorStoreBase):
             )
             candidates.append(doc)
         
-        # Apply reranking if enabled
         if self.enable_reranking and candidates:
             logger.info(f"🎯 Applying reranking to {len(candidates)} candidates...")
-            candidates = self.reranker.rerank_chunks(query, candidates)
-            for doc in candidates:
-                if doc.metadata:
-                    doc.metadata["reranked"] = True
-        
+
+        candidates = self.reranker.rerank_chunks(query, candidates)
+
         # Return top_k results
         results = candidates[:top_k]
         rerank_status = "with reranking" if self.enable_reranking else "without reranking"
