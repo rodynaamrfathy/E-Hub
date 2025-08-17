@@ -151,7 +151,6 @@ async def example_usage():
         user_id='34bd67d3-1fb4-4084-a37b-870aaccb361e'
         title="tester"
 
-
         conv= await db_service.create_conversation(user_id,title)
         print(conv)
 
@@ -174,7 +173,7 @@ async def example_usage():
         vector_store.create_vectorstore(individual_documents)
 
         # Initialize strategies
-        chatting_strategy, summarization_strategy, question_strategy, rag_summary, processor = initialize_strategies(
+        chatting_strategy, summarization_strategy, question_strategy, TS_summary, processor = initialize_strategies(
             logger, llm, vector_store, multilingual_embedder
         )
 
@@ -188,16 +187,31 @@ async def example_usage():
         )
         
         await db_service.add_message(str(conv.conv_id),'assistant', summary) 
-        await db_service.create_strategy("summerization")
-        #await db_service.add_strategy_to_conversation(str(conv.conv_id), summarization_strategy.strategy_id)
+        await db_service.create_strategy('summarization',".")
+        await db_service.add_strategy_to_conversation(str(conv.conv_id))
 
-        # Execute question answering
-        processor.strategy = question_strategy
-        processor.execute_task(
-             individual_documents[0],
-             questions=20,
-             complexity="hard"
+
+        processor.strategy = chatting_strategy
+        prompt="\nWhat tranlation platforms are in the document\n"
+        answer=processor.execute_task(
+            prompt, str(conv.conv_id)
          )
+        print("ANSWER", answer)
+        await db_service.add_message(str(conv.conv_id),'user', prompt)
+        await db_service.add_message(str(conv.conv_id),'assistant',answer) 
+        await db_service.add_strategy_to_conversation(str(conv.conv_id),'assistant',chatting_strategy.strategy_id)
+
+        processor.strategy=question_strategy
+        results=processor.execute_task(individual_documents[0],20,'hard')
+        print(results['qa_output'])
+        await db_service.add_message(str(conv.conv_id),'bot',results['qa_output']) 
+
+        processor.strategy=TS_summary
+        results=processor.execute_task("Translation Platform")
+        print(results)
+        await db_service.add_message(str(conv.conv_id),'bot',results) 
+        
+        
 
     except Exception as e:
         logger.error(f"❌ Error: {e}")

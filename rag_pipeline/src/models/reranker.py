@@ -11,7 +11,7 @@ class Reranker:
             model_name = DEFAULT_RERANKER_MODEL
         self.reranker = CrossEncoder(model_name, cache_folder=str(RERANKER_CACHE_DIR))
         logger.info("✅ Reranker model loaded successfully")
-    def truncate(self,text):
+    def truncate(self,text,max_chars=512):
         return text[:max_chars]
 
     def rerank_chunks(self, query, chunks, max_chars=1000, batch_size=8):
