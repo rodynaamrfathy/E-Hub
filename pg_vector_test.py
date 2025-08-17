@@ -25,6 +25,7 @@ from rag_pipeline.config.settings import (
 import asyncio
 from AIChatbotService.services.database_service import DatabaseService
 from AIChatbotService.models import * 
+from AIChatbotService.database import *
 load_dotenv()
 
 
@@ -141,6 +142,7 @@ async def example_usage():
     """Fixed example usage focusing on vector store functionality"""
     logger = setup_logging()
 
+    await db_manager.initialize()
     db_service=DatabaseService()
 
     
@@ -185,7 +187,8 @@ async def example_usage():
             overview_level="low_level"
         )
         
-        await db_service.add_message(str(conv.conv_id), "bot", summary) 
+        await db_service.add_message(str(conv.conv_id),'assistant', summary) 
+        await db_service.create_strategy("summerization")
         #await db_service.add_strategy_to_conversation(str(conv.conv_id), summarization_strategy.strategy_id)
 
         # Execute question answering
