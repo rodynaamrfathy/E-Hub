@@ -14,7 +14,7 @@ from rag_pipeline.src.models.reranker import Reranker
 logger = logging.getLogger(__name__)
 
 class PgVector_VS(VectorStoreBase):
-    def __init__(self, connection_string , table_name = "chatbot_service" , embedder_model=None):
+    def __init__(self, connection_string , embedder_model=None):
         """Initialize pgvector vector store with optional reranking capabilities.
         
         Args:
@@ -26,7 +26,7 @@ class PgVector_VS(VectorStoreBase):
         logger.info("🗄️ Initializing pgvector VectorStore...")
         
         self.connection_string = connection_string
-        self.table_name = table_name
+
         self.embedder_model = embedder_model
         self.enable_reranking = True
         self.reranker = Reranker()
@@ -52,36 +52,7 @@ class PgVector_VS(VectorStoreBase):
             logger.error(f"❌ Failed to connect to database: {e}")
             raise
 
-    def _create_table(self):
-        """Create the embeddings table if it doesn't exist."""
-        with self.conn.cursor() as cur:
-            # Check if table exists and get dimension if it does
-            cur.execute("""
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
-                WHERE table_name = %s AND column_name = 'embedding'
-            """, (self.table_name,))
-            
-            result = cur.fetchone()
-            
-            if result:
-                logger.info(f"📋 Table '{self.table_name}' already exists")
-                # Get current vector count
-                cur.execute(f"SELECT COUNT(*) FROM {self.table_name}")
-                self.total_vectors = cur.fetchone()[0]
-                logger.info(f"📊 Current vector count: {self.total_vectors}")
-            else:
-                # Create table - we'll add the vector column later when we know the dimension
-                create_table_sql = f"""
-                    CREATE TABLE IF NOT EXISTS {self.table_name} (
-                        id SERIAL PRIMARY KEY,
-                        content TEXT NOT NULL,
-                        metadata JSONB,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """
-                cur.execute(create_table_sql)
-                logger.info(f"✅ Created table '{self.table_name}'")
+
 
     def _add_vector_column(self, dimension: int):
         """Add vector column with specified dimension."""
