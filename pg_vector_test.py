@@ -178,22 +178,23 @@ async def example_usage():
 
         # Execute summarization
         processor.strategy = summarization_strategy
-        summary=processor.execute_task(
+        summary = processor.execute_task( #await can be added 
             individual_documents[0].page_content,
             length="medium",
             verbose=False,
             overview_level="low_level"
         )
         
-        db_service.add_message(conv.conv_id,"bot",summary)
+        await db_service.add_message(str(conv.conv_id), "bot", summary) 
+        #await db_service.add_strategy_to_conversation(str(conv.conv_id), summarization_strategy.strategy_id)
 
         # Execute question answering
-        # processor.strategy = question_strategy
-        # processor.execute_task(
-        #     individual_documents[0],
-        #     questions=20,
-        #     complexity="hard"
-        # )
+        processor.strategy = question_strategy
+        processor.execute_task(
+             individual_documents[0],
+             questions=20,
+             complexity="hard"
+         )
 
     except Exception as e:
         logger.error(f"❌ Error: {e}")
