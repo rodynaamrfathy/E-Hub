@@ -21,3 +21,4 @@ pgvector
 sqlalchemy
 dotenv
 asyncpg
+more_itertools
