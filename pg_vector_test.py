@@ -23,7 +23,8 @@ from rag_pipeline.config.settings import (
     LOG_LEVEL, LLM_CACHE_DIR
 )
 import asyncio
-
+from AIChatbotService.services.database_service import DatabaseService
+from AIChatbotService.models import * 
 load_dotenv()
 
 
@@ -40,6 +41,66 @@ def setup_logging():
         ]
     )
     return logging.getLogger(__name__)
+
+
+def initialize_models(logger):
+    """Initialize embedder and LLM models."""
+    logger.info("🧠 Initializing multilingual embedder model...")
+
+    multilingual_embedder = MultilingualEmbedder(
+            model_name=DEFAULT_EMBEDDING_MODEL, 
+            batch_size=DEFAULT_BATCH_SIZE
+        )
+
+    logger.info(f"✅ Embedder model loaded")
+    logger.info("🤖 Loading OLLAMA LLM model...")
+    llm = OLLAMA_LLM(OLLAMA_MODELS['llama8b'], str(LLM_CACHE_DIR)).load_model()
+#     llm = Hugging_Face_LLM(
+#     model_name="Qwen/Qwen3-8B",
+#     cache_folder=str(LLM_CACHE_DIR)
+# )
+
+    logger.info(f"✅ LLM model loaded ")
+    return multilingual_embedder, llm
+
+
+def initialize_strategies(logger, llm, vector_store, multilingual_embedder):
+    """Initialize all processing strategies."""
+    logger.info("⚙️ Initializing processing strategies...")
+    strategies_progress = tqdm(total=5, desc="🔧 Initializing strategies", unit="strategy")
+
+    logger.info("💬 Initializing Chatting Strategy...")
+    chatting_strategy = ChattingStrategy(llm, vector_store, multilingual_embedder)
+    strategies_progress.update(1)
+
+    logger.info("📝 Initializing Summarization Strategy...")
+    summarization_strategy = SummarizationStrategy(llm)
+    strategies_progress.update(1)
+
+    logger.info("❓ Initializing Question Strategy...")
+    question_strategy = QuestionStrategy(llm)
+    strategies_progress.update(1)
+
+    logger.info("🔍 Initializing RAG Summary Strategy...")
+    rag_summary = Summarization_Rag_Strategy(llm, vector_store)
+    strategies_progress.update(1)
+
+    logger.info("🎯 Initializing Task Processor...")
+    processor = TaskProcessor()
+    strategies_progress.update(1)
+    strategies_progress.close()
+
+
+
+    return chatting_strategy, summarization_strategy , question_strategy , rag_summary , processor
+
+
+
+
+
+
+
+
 
 
 def load_and_process_documents(logger, files_paths):
@@ -72,64 +133,73 @@ def load_and_process_documents(logger, files_paths):
 
     return chunked_docs, individual_documents
 
+import os
+import asyncio
+import traceback
+
 async def example_usage():
     """Fixed example usage focusing on vector store functionality"""
-    
-    # Initialize embedder
-    multilingual_embedder = MultilingualEmbedder(
-        model_name=DEFAULT_EMBEDDING_MODEL,
-        batch_size=DEFAULT_BATCH_SIZE
-    )
-    
-    # Initialize vector store
-    vector_store = PgVector_VS(
-        connection_string=os.getenv("DATABASE_URL"),
-        table_name="embeddings", 
-        embedder_model=multilingual_embedder
-    )
-    
+    logger = setup_logging()
+
+    db_service=DatabaseService()
 
     
+
     try:
+        user_id='34bd67d3-1fb4-4084-a37b-870aaccb361e'
+        title="tester"
 
-        logger = setup_logging()
+
+        conv= await db_service.create_conversation(user_id,title)
+        print(conv)
+
         logger.info("🚀 Starting document processing pipeline...")
-        file_paths=['/Users/maryamsaad/Documents/app/data/PMS Market Research.pdf','/Users/maryamsaad/Documents/app/data/Market Research Report.pdf']
-        chunked_docs , individual_documents = load_and_process_documents(logger,file_paths)
-        print("Creating vector store...")
-        # Create vector store (this handles both embedding generation and storage)
+
+        # Initialize models
+        multilingual_embedder, llm = initialize_models(logger)
+
+        # Initialize vector store
+        vector_store = PgVector_VS(
+            connection_string=os.getenv("DATABASE_URL"),
+            embedder_model=multilingual_embedder
+        )
+
+        # Load and process documents
+        file_path = "/Users/maryamsaad/Documents/Graduation_Proj/junk/2 Chatting with PDF copy.pdf"
+        chunked_docs, individual_documents = load_and_process_documents(logger, file_path)
+
+        # Create vector store
         vector_store.create_vectorstore(individual_documents)
+
+        # Initialize strategies
+        chatting_strategy, summarization_strategy, question_strategy, rag_summary, processor = initialize_strategies(
+            logger, llm, vector_store, multilingual_embedder
+        )
+
+        # Execute summarization
+        processor.strategy = summarization_strategy
+        summary=processor.execute_task(
+            individual_documents[0].page_content,
+            length="medium",
+            verbose=False,
+            overview_level="low_level"
+        )
         
-        print("Testing search...")
-        # Test search
-        results = vector_store.get_relevant_documents("machine learning", top_k=5)
-        
-        print(f"Found {len(results)} results:")
-        for i, doc in enumerate(results, 1):
-            print(f"\nResult {i}:")
-            print(f"Content: {doc.page_content}")
-            print(f"Metadata: {doc.metadata}")
-            if 'similarity' in doc.metadata:
-                print(f"Similarity: {doc.metadata['similarity']:.4f}")
-        
-        # Test with different query
-        print("\n" + "="*50)
-        print("Testing with 'artificial intelligence' query...")
-        results2 = vector_store.get_relevant_documents("artificial intelligence", top_k=2)
-        
-        for i, doc in enumerate(results2, 1):
-            print(f"\nResult {i}:")
-            print(f"Content: {doc.page_content}")
-            if 'similarity' in doc.metadata:
-                print(f"Similarity: {doc.metadata['similarity']:.4f}")
-                
+        db_service.add_message(conv.conv_id,"bot",summary)
+
+        # Execute question answering
+        # processor.strategy = question_strategy
+        # processor.execute_task(
+        #     individual_documents[0],
+        #     questions=20,
+        #     complexity="hard"
+        # )
+
     except Exception as e:
-        print(f"Error: {e}")
-        import traceback
+        logger.error(f"❌ Error: {e}")
         traceback.print_exc()
-    
+
     finally:
-        # Clean up
         vector_store.close()
 
 if __name__ == "__main__":

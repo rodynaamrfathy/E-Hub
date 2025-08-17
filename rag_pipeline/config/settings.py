@@ -17,7 +17,8 @@ DEFAULT_CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
 
 # LLM configurations
 OLLAMA_MODELS = {
-    "qwen3": os.getenv("QWEN3_MODEL", "qwen3:8b")
+    "qwen3": os.getenv("QWEN3_MODEL", "qwen3:8b"),
+    "llama8b": os.getenv("llama3:8b","llama3:8b")
 }
 HF_MODELS = {
     "qwen3": os.getenv("QWEN3_MODEL", "Qwen/Qwen3-8B"),

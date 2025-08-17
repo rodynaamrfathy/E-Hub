@@ -26,7 +26,7 @@ class PgVector_VS(VectorStoreBase):
         logger.info("🗄️ Initializing pgvector VectorStore...")
         
         self.connection_string = connection_string
-
+        self.table_name="embeddings"
         self.embedder_model = embedder_model
         self.enable_reranking = True
         self.reranker = Reranker()
@@ -35,7 +35,7 @@ class PgVector_VS(VectorStoreBase):
         
         # Initialize database connection
         self._init_connection()
-        self._create_table()
+       
         
         if embedder_model:
             logger.info("✅ pgvector VectorStore initialized with embedder model")

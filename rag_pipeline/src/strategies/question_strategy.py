@@ -226,6 +226,7 @@ class QuestionStrategy(TaskStrategy):
             # Parse the output
             logger.info("📝 Parsing generated QA pairs...")
             parsed_qa = self.parse_qa_pairs(qa_output)
+
             
             # Log results
             logger.info(f"✅ Question generation successful!")
