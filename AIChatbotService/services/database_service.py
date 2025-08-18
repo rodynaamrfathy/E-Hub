@@ -31,7 +31,7 @@ class DatabaseService:
             stmt = (
                 select(Conversation)
                 .options(
-                    selectinload(Conversation.messages),
+                    selectinload(Conversation.messages)
                 )
                 .where(Conversation.conv_id == uuid.UUID(conv_id))
             )
