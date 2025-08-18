@@ -32,7 +32,6 @@ class DatabaseService:
                 select(Conversation)
                 .options(
                     selectinload(Conversation.messages),
-                    selectinload(Conversation.strategies).selectinload(ConversationStrategy.strategy),
                 )
                 .where(Conversation.conv_id == uuid.UUID(conv_id))
             )
