@@ -8,8 +8,10 @@ from AIChatbotService.models import (
 )
 from AIChatbotService.database import db_manager
 import uuid
-from sqlalchemy.dialects.postgresql import array_append
 
+from sqlalchemy import update, select, func
+import uuid
+from typing import Optional
 
 
 class DatabaseService:
@@ -57,6 +59,7 @@ class DatabaseService:
             result = await session.execute(stmt)
             return result.scalars().all()
 
+
     async def update_conversation(
         self,
         conv_id: str,
@@ -65,21 +68,34 @@ class DatabaseService:
     ) -> bool:
         """Update title and/or append a new strategy to the conversation."""
         async with db_manager.get_session() as session:
+            # First, check if conversation exists
             stmt = select(Conversation).where(Conversation.conv_id == uuid.UUID(conv_id))
             result = await session.execute(stmt)
             conversation = result.scalar_one_or_none()
             if not conversation:
                 return False
 
+            update_values = {}
             if title is not None:
-                conversation.title = title
+                update_values["title"] = title
 
             if new_strategy:
-                if new_strategy not in conversation.strategy:
-                    conversation.strategy.append(new_strategy)
+                # Append new strategy only if it's not already in the array
+                update_values["strategy"] = func.array_append(
+                    Conversation.strategy, new_strategy
+                )
 
-            await session.commit()
+            if update_values:
+                stmt = (
+                    update(Conversation)
+                    .where(Conversation.conv_id == uuid.UUID(conv_id))
+                    .values(**update_values)
+                )
+                await session.execute(stmt)
+                await session.commit()
+
             return True
+
 
     async def delete_conversation(self, conv_id: str) -> bool:
         async with db_manager.get_session() as session:
