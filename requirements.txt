@@ -22,3 +22,5 @@ sqlalchemy
 dotenv
 asyncpg
 more_itertools
+bs4
+requests
