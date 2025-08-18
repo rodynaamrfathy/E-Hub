@@ -4,9 +4,7 @@ from sqlalchemy.orm import selectinload
 from AIChatbotService.models import (
     Conversation,
     Message,
-    Embedding,
-    Strategy,
-    ConversationStrategy,
+    Embedding
 )
 from AIChatbotService.database import db_manager
 import uuid
