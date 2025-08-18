@@ -9,9 +9,12 @@ import logging
 from tqdm import tqdm
 from rag_pipeline.src.abstracts.abstract_vector_db import VectorStoreBase
 from rag_pipeline.src.models.reranker import Reranker
+from AIChatbotService.services.database_service import DatabaseService
 
 
 logger = logging.getLogger(__name__)
+
+db_service = DatabaseService()
 
 class PgVector_VS(VectorStoreBase):
     def __init__(self, connection_string , embedder_model=None):
@@ -131,10 +134,13 @@ class PgVector_VS(VectorStoreBase):
                 metadata = doc.metadata if doc.metadata else {}
                 metadata['normalized'] = normalize_embeddings  # Track normalization status
                 
-                cur.execute(f"""
-                    INSERT INTO {self.table_name} (content, meta_data, embedding) 
-                    VALUES (%s, %s, %s)
-                """, (doc.page_content, json.dumps(metadata), embedding.tolist()))
+                #cur.execute(f"""
+                #    INSERT INTO {self.table_name} (content, meta_data, embedding) 
+                #    VALUES (%s, %s, %s)
+                #""", (doc.page_content, json.dumps(metadata), embedding.tolist()))
+
+                db_service.create_embedding(doc.page_content, embedding.tolist(), json.dumps(metadata))
+
         
         # Update total count
         with self.conn.cursor() as cur:
