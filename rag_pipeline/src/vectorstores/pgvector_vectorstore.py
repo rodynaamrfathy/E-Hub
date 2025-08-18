@@ -56,7 +56,6 @@ class PgVector_VS(VectorStoreBase):
             raise
 
 
-
     def _add_vector_column(self, dimension: int):
         """Add vector column with specified dimension."""
         with self.conn.cursor() as cur:
@@ -77,7 +76,6 @@ class PgVector_VS(VectorStoreBase):
                 logger.info(f"✅ Created vector index '{index_name}'")
             
             self.dimension = dimension
-
 
 
     def create_vectorstore(self, docs, normalize_embeddings=True):
@@ -153,6 +151,7 @@ class PgVector_VS(VectorStoreBase):
         print(f"[pgvector] Normalization: {'enabled' if normalize_embeddings else 'disabled'}")
         
         return self
+    
     def get_relevant_documents(self, query, top_k=5):
         """Search and retrieve the most relevant documents for a query with optional reranking."""
         
