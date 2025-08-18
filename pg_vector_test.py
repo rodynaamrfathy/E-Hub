@@ -155,7 +155,7 @@ async def example_usage():
         user_id = '34bd67d3-1fb4-4084-a37b-870aaccb361e'
         title = "tester"
 
-        conv = await db_service.create_conversation(user_id, title, "summarization")
+        conv = await db_service.create_conversation(user_id, title)
         print(conv)
 
         logger.info("🚀 Starting document processing pipeline...")
@@ -190,6 +190,8 @@ async def example_usage():
             verbose=False,
             overview_level="low_level"
         )
+        await db_service.update_conversation(str(conv.conv_id), title, "summarization")
+
 
         await db_service.add_message(str(conv.conv_id), 'assistant', summary)
 
@@ -198,6 +200,8 @@ async def example_usage():
         answer = processor.execute_task(
             prompt, str(conv.conv_id)
         )
+        await db_service.update_conversation(str(conv.conv_id), title, "Chat")
+
         print("ANSWER", answer)
         await db_service.add_message(str(conv.conv_id), 'user', prompt)
         await db_service.add_message(str(conv.conv_id), 'assistant', answer)
@@ -206,11 +210,14 @@ async def example_usage():
         results = processor.execute_task(individual_documents[0], 20, 'hard')
         print(results['qa_output'])
         await db_service.add_message(str(conv.conv_id), 'bot', results['qa_output'])
+        await db_service.update_conversation(str(conv.conv_id), title, "Q&A")
+
 
         processor.strategy = TS_summary
         results = processor.execute_task("Translation Platform")
         print(results)
         await db_service.add_message(str(conv.conv_id), 'bot', results)
+        await db_service.update_conversation(str(conv.conv_id), title, "TopicSpecific")
 
     except Exception as e:
         logger.error(f"❌ Error: {e}")

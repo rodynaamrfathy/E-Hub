@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from sqlalchemy.orm import selectinload
 from AIChatbotService.models import (
     Conversation,
@@ -8,18 +8,29 @@ from AIChatbotService.models import (
 )
 from AIChatbotService.database import db_manager
 import uuid
+from sqlalchemy.dialects.postgresql import array_append
+
 
 
 class DatabaseService:
     # ---------------------------
     # Conversations
     # ---------------------------
-    async def create_conversation(self, user_id: str, title: str = None, strategy: str = "Chat") -> Conversation:
+    async def create_conversation(
+        self,
+        user_id: str,
+        title: str = None,
+        strategies: Optional[List[str]] = None
+    ) -> Conversation:
+        """Create a new conversation with a list of strategies."""
+        if strategies is None:
+            strategies = ["Chat"]  # default strategy
+
         async with db_manager.get_session() as session:
             conversation = Conversation(
                 user_id=uuid.UUID(user_id) if isinstance(user_id, str) else user_id,
                 title=title,
-                strategy=strategy,  # required now
+                strategy=strategies,  # list of strategies
             )
             session.add(conversation)
             await session.commit()
@@ -30,9 +41,7 @@ class DatabaseService:
         async with db_manager.get_session() as session:
             stmt = (
                 select(Conversation)
-                .options(
-                    selectinload(Conversation.messages)
-                )
+                .options(selectinload(Conversation.messages))
                 .where(Conversation.conv_id == uuid.UUID(conv_id))
             )
             result = await session.execute(stmt)
@@ -48,25 +57,29 @@ class DatabaseService:
             result = await session.execute(stmt)
             return result.scalars().all()
 
-    async def update_conversation(self, conv_id: str, title: str = None, strategy: str = None) -> bool:
+    async def update_conversation(
+        self,
+        conv_id: str,
+        title: Optional[str] = None,
+        new_strategy: Optional[str] = None
+    ) -> bool:
+        """Update title and/or append a new strategy to the conversation."""
         async with db_manager.get_session() as session:
-            update_values = {}
-            if title is not None:
-                update_values["title"] = title
-            if strategy is not None:
-                update_values["strategy"] = strategy
-
-            if not update_values:
-                return False  
-
-            stmt = (
-                update(Conversation)
-                .where(Conversation.conv_id == uuid.UUID(conv_id))
-                .values(**update_values)
-            )
+            stmt = select(Conversation).where(Conversation.conv_id == uuid.UUID(conv_id))
             result = await session.execute(stmt)
+            conversation = result.scalar_one_or_none()
+            if not conversation:
+                return False
+
+            if title is not None:
+                conversation.title = title
+
+            if new_strategy:
+                if new_strategy not in conversation.strategy:
+                    conversation.strategy.append(new_strategy)
+
             await session.commit()
-            return result.rowcount > 0
+            return True
 
     async def delete_conversation(self, conv_id: str) -> bool:
         async with db_manager.get_session() as session:
