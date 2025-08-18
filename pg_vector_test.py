@@ -9,6 +9,7 @@ from rag_pipeline.config.settings import (
 from tqdm import tqdm
 import logging
 import time
+
 # Internal imports
 from rag_pipeline.src.models.multilingual_embedder import MultilingualEmbedder
 from rag_pipeline.src.models.llm_models import OLLAMA_LLM , Hugging_Face_LLM
