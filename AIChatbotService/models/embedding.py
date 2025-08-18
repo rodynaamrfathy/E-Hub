@@ -13,4 +13,4 @@ class Embedding(Base):
     content = Column(Text, nullable=False)
     meta_data = Column(JSON, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    embedding = Column(Vector(768))  # Requires pgvector extension
+    embedding = Column(Vector(384))  # Requires pgvector extension
