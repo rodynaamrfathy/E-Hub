@@ -152,7 +152,7 @@ async def example_usage():
         user_id='34bd67d3-1fb4-4084-a37b-870aaccb361e'
         title="tester"
 
-        conv= await db_service.create_conversation(user_id,title, "summarization")
+        conv= await db_service.create_conversation(user_id, title, "summarization")
         print(conv)
 
         logger.info("🚀 Starting document processing pipeline...")
