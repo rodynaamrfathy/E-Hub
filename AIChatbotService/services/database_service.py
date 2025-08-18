@@ -14,17 +14,18 @@ class DatabaseService:
     # ---------------------------
     # Conversations
     # ---------------------------
-    async def create_conversation(self, user_id: str, title: str = None, strategy: str = "Chat") -> Conversation:
+    async def create_conversation(self, user_id: str, title: str = None, strategy: Optional[List[str]] = None) -> Conversation:
         async with db_manager.get_session() as session:
             conversation = Conversation(
                 user_id=uuid.UUID(user_id) if isinstance(user_id, str) else user_id,
                 title=title,
-                strategy=strategy,  # required now
+                strategy=strategy or ["Chat"],  # wrap default in list
             )
             session.add(conversation)
             await session.commit()
             await session.refresh(conversation)
             return conversation
+
 
     async def get_conversation(self, conv_id: str) -> Optional[Conversation]:
         async with db_manager.get_session() as session:
