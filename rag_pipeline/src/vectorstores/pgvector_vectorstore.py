@@ -180,7 +180,7 @@ class PgVector_VS(VectorStoreBase):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Use cosine similarity with explicit cast to pgvector
             cur.execute(f"""
-                SELECT id, content, metadata, 
+                SELECT id, content, meta_data, 
                     1 - (embedding <=> %s::vector) as similarity
                 FROM {self.table_name}
                 ORDER BY embedding <=> %s::vector

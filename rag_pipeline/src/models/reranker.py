@@ -47,5 +47,4 @@ class Reranker:
             )
             reranked_chunks.append(enhanced_chunk)
 
-        logger.info(f"✅ Chunks reranked - Best score: {max(scores):.3f}")
         return reranked_chunks
