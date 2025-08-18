@@ -1,15 +1,14 @@
 from rag_pipeline.src.abstracts.abstract_embedder import Embedder
-
 import numpy as np
 import logging
 from tqdm import tqdm
 
-
 logger = logging.getLogger(__name__)
 
-class MultilingualEmbedder(Embedder): 
-    def __init__(self, model_name, batch_size):        
-        super().__init__(model_name, batch_size)    
+
+class MultilingualEmbedder(Embedder):
+    def __init__(self, model_name, batch_size):
+        super().__init__(model_name, batch_size)
         logger.info("✅ MultilingualEmbedder initialized successfully")
 
     def embed_documents(self, documents):
