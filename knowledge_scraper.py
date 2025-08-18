@@ -4,6 +4,8 @@ import re
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
+import io
+from PyPDF2 import PdfReader
 from rag_pipeline.src.models.multilingual_embedder import MultilingualEmbedder
 
 def create_embedder():
@@ -12,6 +14,16 @@ def create_embedder():
         model_name="sentence-transformers/all-mpnet-base-v2", 
         batch_size=32
     )
+
+
+def extract_pdf_content(response):
+    """Extract text from a PDF response."""
+    pdf_bytes = io.BytesIO(response.content)
+    reader = PdfReader(pdf_bytes)
+    text = []
+    for page in reader.pages:
+        text.append(page.extract_text() or "")
+    return "\n".join(text).strip() or "PLACEHOLDER_CONTENT"
 
 
 def extract_metadata(soup, url):
@@ -82,48 +94,72 @@ def embed_chunks(embedder, chunks):
         print(f"❌ Error generating embeddings: {e}")
         print("⚠️ Using placeholder embeddings")
         return [[0.0, 0.0, 0.0]] * len(chunks)
-
+import os
+import re
+import json
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 def scrape_and_save_json(urls, output_dir="knowledge_base", chunk_size=500):
     """
-    Scrapes a webpage, extracts content, chunks it, embeds chunks, and saves as JSON.
+    Scrapes a webpage or PDF, extracts content, chunks it, embeds chunks, and saves as JSON.
     """
     os.makedirs(output_dir, exist_ok=True)
     
     # Initialize embedder
     embedder = create_embedder()
+
     # Ensure urls is iterable
     if isinstance(urls, str):
         urls = [urls]
-    for url in urls:
 
+    for idx, url in enumerate(urls, start=1):
         try:
             print(f"🌐 Fetching content from {url}...")
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            response = requests.get(
+                url,
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    ),
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": "https://www.google.com/"
+                },
+                timeout=10
+            )
 
             if response.status_code != 200:
-                print(f"❌ Failed to fetch {url}, status {response.status_code}")
-                return
+                print(f"❌ Failed to fetch {url}, status {response.status_code}. Skipping...")
+                continue   # skip to next URL
 
-            soup = BeautifulSoup(response.text, "html.parser")
+            # --- Detect PDFs ---
+            content_type = response.headers.get("Content-Type", "").lower()
+            if url.endswith(".pdf") or "application/pdf" in content_type:
+                print("📄 Detected PDF, extracting text...")
+                content = extract_pdf_content(response)
+                title = url.split("/")[-1]  # fallback title from filename
+                author = "PLACEHOLDER_AUTHOR"
+                date_published = "PLACEHOLDER_DATE"
+                category = "PLACEHOLDER_CATEGORY"
+            else:
+                soup = BeautifulSoup(response.text, "html.parser")
+                title, author, date_published, category = extract_metadata(soup, url)
+                content = extract_content(soup)
 
-            # Extract metadata
-            title, author, date_published, category = extract_metadata(soup, url)
-
-            # Extract content
-            content = extract_content(soup)
-            
             # Extract website name
             website_name = re.match(r"https?://([^/]+)", url).group(1).replace("www.", "").title()
-            
+
             # Chunk content
             chunks = chunk_content(content, chunk_size)
             print(f"📄 Created {len(chunks)} chunks from content")
-            
+
             # Generate embeddings for chunks
             embeddings = embed_chunks(embedder, chunks)
 
-            # Build JSON structure with embedded chunks
+            # Build chunk objects
             chunk_objects = []
             for i, (chunk_text, embedding) in enumerate(zip(chunks, embeddings)):
                 chunk_objects.append({
@@ -148,7 +184,7 @@ def scrape_and_save_json(urls, output_dir="knowledge_base", chunk_size=500):
                 },
                 "documents": [
                     {
-                        "id": "doc_001",
+                        "id": f"doc_{idx:03d}",
                         "url": url,
                         "content": content,
                         "chunks": chunk_objects
@@ -166,8 +202,10 @@ def scrape_and_save_json(urls, output_dir="knowledge_base", chunk_size=500):
 
         except requests.exceptions.RequestException as e:
             print(f"⚠️ Error fetching {url}: {e}")
+            continue  # skip to next
         except Exception as e:
-            print(f"❌ Unexpected error: {e}")
+            print(f"❌ Unexpected error for {url}: {e}")
+            continue  # skip to next
 
 
 if __name__ == "__main__":
@@ -179,7 +217,11 @@ if __name__ == "__main__":
     
     # Example usage with multiple URLs
     urls = [
+        "https://www.tomra.com/reverse-vending/media-center/feature-articles/what-is-rpet-plastic",
+        "https://www.bo-re-tech.com/en/article/pet-bottle-recycling-process.html",
+        "https://www.avient.com/sites/default/files/2022-04/Sustainable%20Material%20Answers_%20%20Recycled%20PET%202022_0.pdf",
         "https://www.efsa.europa.eu/en/efsajournal/pub/2980",
-        "https://bottledwater.org/rpet-facts/"
+        "https://bottledwater.org/rpet-facts/",
+        "https://scrapmanagement.com/blog/what-is-rpet/"
     ]
     scrape_and_save_json(urls, "knowledge_base")
