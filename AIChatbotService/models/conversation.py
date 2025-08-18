@@ -31,7 +31,6 @@ class Conversation(Base):
 
     # Relationships
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
-    strategies = relationship("ConversationStrategy", back_populates="conversation", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Conversation(conv_id={self.conv_id}, user_id={self.user_id}, title={self.title})>"
