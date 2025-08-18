@@ -132,7 +132,7 @@ class PgVector_VS(VectorStoreBase):
                 metadata['normalized'] = normalize_embeddings  # Track normalization status
                 
                 cur.execute(f"""
-                    INSERT INTO {self.table_name} (content, metadata, embedding) 
+                    INSERT INTO {self.table_name} (content, meta_data, embedding) 
                     VALUES (%s, %s, %s)
                 """, (doc.page_content, json.dumps(metadata), embedding.tolist()))
         
