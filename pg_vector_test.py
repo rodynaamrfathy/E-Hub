@@ -152,7 +152,7 @@ async def example_usage():
         user_id='34bd67d3-1fb4-4084-a37b-870aaccb361e'
         title="tester"
 
-        conv= await db_service.create_conversation(user_id,title)
+        conv= await db_service.create_conversation(user_id,title, "summarization")
         print(conv)
 
         logger.info("🚀 Starting document processing pipeline...")
@@ -188,8 +188,6 @@ async def example_usage():
         )
         
         await db_service.add_message(str(conv.conv_id),'assistant', summary) 
-        await db_service.create_strategy('summarization',".")
-        await db_service.add_strategy_to_conversation(str(conv.conv_id))
 
 
         processor.strategy = chatting_strategy
@@ -200,7 +198,6 @@ async def example_usage():
         print("ANSWER", answer)
         await db_service.add_message(str(conv.conv_id),'user', prompt)
         await db_service.add_message(str(conv.conv_id),'assistant',answer) 
-        await db_service.add_strategy_to_conversation(str(conv.conv_id),'assistant',chatting_strategy.strategy_id)
 
         processor.strategy=question_strategy
         results=processor.execute_task(individual_documents[0],20,'hard')
