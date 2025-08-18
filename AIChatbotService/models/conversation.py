@@ -27,7 +27,7 @@ class Conversation(Base):
         default=func.current_timestamp(),
         onupdate=func.current_timestamp()
     )
-    strategy = Column(ARRAY (Enum('summarization', 'Q&A', 'Chat', 'TopicSpecific', name = 'strategy_type')), nullable=False)
+    strategy = Column ((Enum('summarization', 'Q&A', 'Chat', 'TopicSpecific', name = 'strategy_type')), nullable=False)
 
     # Relationships
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")

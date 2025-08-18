@@ -15,9 +15,9 @@ class Message(Base):
     msg_id = Column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
+
     conv_id = Column(UUID(as_uuid=True), ForeignKey("public.conversations.conv_id", ondelete="CASCADE"))
     sender = Column(Text, nullable=False)
     content = Column(Text, nullable=False)
