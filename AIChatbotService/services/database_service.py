@@ -59,7 +59,6 @@ class DatabaseService:
             result = await session.execute(stmt)
             return result.scalars().all()
 
-
     async def update_conversation(
         self,
         conv_id: str,
@@ -75,27 +74,22 @@ class DatabaseService:
             if not conversation:
                 return False
 
-            update_values = {}
+            # Update title if provided
             if title is not None:
-                update_values["title"] = title
+                conversation.title = title
 
-            if new_strategy:
-                # Append new strategy only if it's not already in the array
-                update_values["strategy"] = func.array_append(
-                    Conversation.strategy, new_strategy
-                )
-
-            if update_values:
+            # Append new strategy if provided and not already in list
+            if new_strategy and new_strategy not in conversation.strategy:
+                # Use PostgreSQL array append via SQLAlchemy func
                 stmt = (
                     update(Conversation)
                     .where(Conversation.conv_id == uuid.UUID(conv_id))
-                    .values(**update_values)
+                    .values(strategy=func.array_append(Conversation.strategy, new_strategy))
                 )
                 await session.execute(stmt)
-                await session.commit()
 
+            await session.commit()
             return True
-
 
     async def delete_conversation(self, conv_id: str) -> bool:
         async with db_manager.get_session() as session:
