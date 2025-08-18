@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, UUID
+from sqlalchemy import Column, Enum, String, Text, DateTime, ForeignKey, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
@@ -22,6 +22,12 @@ class Conversation(Base):
         default=func.current_timestamp(),
         server_default=func.current_timestamp()
     )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
+    strategy = Column(Enum('summarization', 'Q&A', 'Chat', 'TopicSpecific', name = 'strategy_type'), nullable=False)
 
     # Relationships
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")

@@ -16,11 +16,12 @@ class DatabaseService:
     # ---------------------------
     # Conversations
     # ---------------------------
-    async def create_conversation(self, user_id: str, title: str = None) -> Conversation:
+    async def create_conversation(self, user_id: str, title: str = None, strategy: str = "Chat") -> Conversation:
         async with db_manager.get_session() as session:
             conversation = Conversation(
                 user_id=uuid.UUID(user_id) if isinstance(user_id, str) else user_id,
                 title=title,
+                strategy=strategy,  # required now
             )
             session.add(conversation)
             await session.commit()
@@ -50,12 +51,21 @@ class DatabaseService:
             result = await session.execute(stmt)
             return result.scalars().all()
 
-    async def update_conversation_title(self, conv_id: str, title: str) -> bool:
+    async def update_conversation(self, conv_id: str, title: str = None, strategy: str = None) -> bool:
         async with db_manager.get_session() as session:
+            update_values = {}
+            if title is not None:
+                update_values["title"] = title
+            if strategy is not None:
+                update_values["strategy"] = strategy
+
+            if not update_values:
+                return False  
+
             stmt = (
                 update(Conversation)
                 .where(Conversation.conv_id == uuid.UUID(conv_id))
-                .values(title=title)
+                .values(**update_values)
             )
             result = await session.execute(stmt)
             await session.commit()
@@ -122,69 +132,6 @@ class DatabaseService:
     async def delete_embedding(self, emb_id: str) -> bool:
         async with db_manager.get_session() as session:
             stmt = delete(Embedding).where(Embedding.id == uuid.UUID(emb_id))
-            result = await session.execute(stmt)
-            await session.commit()
-            return result.rowcount > 0
-
-    # ---------------------------
-    # Strategies
-    # ---------------------------
-    async def create_strategy(self, name: str, description: str) -> Strategy:
-        async with db_manager.get_session() as session:
-            strategy = Strategy(name=name, description=description)
-            session.add(strategy)
-            await session.commit()
-            await session.refresh(strategy)
-            return strategy
-
-    async def get_strategy(self, strategy_id: int) -> Optional[Strategy]:
-        async with db_manager.get_session() as session:
-            stmt = select(Strategy).where(Strategy.strategy_id == strategy_id)
-            result = await session.execute(stmt)
-            return result.scalar_one_or_none()
-
-    async def get_strategies(self) -> List[Strategy]:
-        async with db_manager.get_session() as session:
-            stmt = select(Strategy)
-            result = await session.execute(stmt)
-            return result.scalars().all()
-
-    async def delete_strategy(self, strategy_id: int) -> bool:
-        async with db_manager.get_session() as session:
-            stmt = delete(Strategy).where(Strategy.strategy_id == strategy_id)
-            result = await session.execute(stmt)
-            await session.commit()
-            return result.rowcount > 0
-
-    # ---------------------------
-    # Conversation <-> Strategies
-    # ---------------------------
-    async def add_strategy_to_conversation(self, conv_id: str, strategy_id: int) -> ConversationStrategy:
-        async with db_manager.get_session() as session:
-            conv_strategy = ConversationStrategy(
-                conv_id=uuid.UUID(conv_id), strategy_id=strategy_id
-            )
-            session.add(conv_strategy)
-            await session.commit()
-            await session.refresh(conv_strategy)
-            return conv_strategy
-
-    async def get_conversation_strategies(self, conv_id: str) -> List[Strategy]:
-        async with db_manager.get_session() as session:
-            stmt = (
-                select(Strategy)
-                .join(ConversationStrategy, Strategy.strategy_id == ConversationStrategy.strategy_id)
-                .where(ConversationStrategy.conv_id == uuid.UUID(conv_id))
-            )
-            result = await session.execute(stmt)
-            return result.scalars().all()
-
-    async def remove_strategy_from_conversation(self, conv_id: str, strategy_id: int) -> bool:
-        async with db_manager.get_session() as session:
-            stmt = delete(ConversationStrategy).where(
-                ConversationStrategy.conv_id == uuid.UUID(conv_id),
-                ConversationStrategy.strategy_id == strategy_id,
-            )
             result = await session.execute(stmt)
             await session.commit()
             return result.rowcount > 0

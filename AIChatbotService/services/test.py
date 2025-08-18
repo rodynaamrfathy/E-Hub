@@ -2,7 +2,6 @@ import asyncio
 from AIChatbotService.services.database_service import DatabaseService
 from AIChatbotService.database import db_manager
 
-db_service = DatabaseService()
 
 async def main():
 
