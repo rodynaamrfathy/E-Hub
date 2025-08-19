@@ -155,7 +155,7 @@ async def example_usage():
         user_id = '34bd67d3-1fb4-4084-a37b-870aaccb361e'
         title = "tester"
 
-        conv = await db_service.create_conversation(user_id, title)
+        conv = await db_service.create_conversation(user_id, title, "Chat")
         print(conv)
 
         logger.info("🚀 Starting document processing pipeline...")
@@ -174,7 +174,7 @@ async def example_usage():
         chunked_docs, individual_documents = load_and_process_documents(logger, file_path)
 
         # Create vector store
-        vector_store.create_vectorstore(individual_documents)
+        await vector_store.create_vectorstore(individual_documents)
 
         # Initialize strategies
         chatting_strategy, summarization_strategy, question_strategy, TS_summary, processor = initialize_strategies(
@@ -209,15 +209,15 @@ async def example_usage():
         processor.strategy = question_strategy
         results = processor.execute_task(individual_documents[0], 20, 'hard')
         print(results['qa_output'])
-        await db_service.add_message(str(conv.conv_id), 'bot', results['qa_output'])
+        await db_service.add_message(str(conv.conv_id), 'assistant', results['qa_output'])
         #await db_service.update_conversation(str(conv.conv_id), title, "Q&A")
 
 
-        processor.strategy = TS_summary
-        results = processor.execute_task("Translation Platform")
-        print(results)
-        await db_service.add_message(str(conv.conv_id), 'bot', results)
-        #await db_service.update_conversation(str(conv.conv_id), title, "TopicSpecific")
+        # processor.strategy = TS_summary
+        # results = processor.execute_task("Translation Platform")
+        # print(results)
+        # await db_service.add_message(str(conv.conv_id), 'assistant', results)
+        # #await db_service.update_conversation(str(conv.conv_id), title, "TopicSpecific")
 
     except Exception as e:
         logger.error(f"❌ Error: {e}")

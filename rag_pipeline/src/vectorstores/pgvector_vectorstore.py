@@ -78,7 +78,7 @@ class PgVector_VS(VectorStoreBase):
             self.dimension = dimension
 
 
-    def create_vectorstore(self, docs, normalize_embeddings=True):
+    async def create_vectorstore(self, docs, normalize_embeddings=True):
         """Create enhanced pgvector store from Document objects with metadata."""
         logger.info(f"🚀 Creating enhanced vectorstore from {len(docs)} Document objects...")
         logger.info(f"⚙️ Normalization: {'enabled' if normalize_embeddings else 'disabled'}")
@@ -133,11 +133,11 @@ class PgVector_VS(VectorStoreBase):
                 metadata['normalized'] = normalize_embeddings  # Track normalization status
                 
                 #cur.execute(f"""
-                #    INSERT INTO {self.table_name} (content, meta_data, embedding) 
-                #    VALUES (%s, %s, %s)
-                #""", (doc.page_content, json.dumps(metadata), embedding.tolist()))
+                #   INSERT INTO {self.table_name} (content, meta_data, embedding) 
+                #   VALUES (%s, %s, %s)
+                # """, (doc.page_content, json.dumps(metadata), embedding.tolist()))
 
-                db_service.create_embedding(doc.page_content, embedding.tolist(), json.dumps(metadata))
+                await db_service.create_embedding(doc.page_content, embedding.tolist(), json.dumps(metadata))
 
         
         # Update total count

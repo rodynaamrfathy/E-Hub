@@ -23,4 +23,7 @@ dotenv
 asyncpg
 more_itertools
 bs4
+langraph
 requests
+langchain_tavily
+exa_py

@@ -333,7 +333,7 @@ class Summarization_Rag_Strategy(TaskStrategy):
             elif hasattr(self.retriever, 'get_relevant_documents'):
                 # Use a broad query to get diverse results
                 logger.info("⚠️ Falling back to broad search method")
-                chunks = self.retriever.get_relevant_documents("", k=1000)  # Adjust k as needed
+                chunks = self.retriever.get_relevant_documents("", k=DEFAULT_TOP_K)  # Adjust k as needed
                 return chunks
             
             logger.error("❌ Cannot retrieve all chunks - unsupported retriever type")
