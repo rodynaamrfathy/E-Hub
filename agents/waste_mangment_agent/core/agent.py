@@ -14,10 +14,9 @@ class WasteManagementAgent:
         self.llm = ChatOllama(model=Config.OLLAMA_MODEL)
         
         # Initialize tools
-        # self.waste_classifier = WasteClassifier()
         self.sorting_rules = SortingRules()
         self.eco_tips = EcoTips()
-        # self.web_search = ExaSearch()
+        self.web_search = ExaSearch()
         
         # Initialize agent
         self._setup_agent()
@@ -25,10 +24,9 @@ class WasteManagementAgent:
     def _setup_agent(self):
         """Setup the LangChain agent with tools"""
         tools = [
-            # self.waste_classifier.get_tool(),
             self.sorting_rules.get_tool(),
             self.eco_tips.get_tool(),
-            # self.web_search.get_tool()
+            self.web_search.get_tool()
         ]
         
         # Custom prompt to guide the agent better
@@ -37,12 +35,12 @@ class WasteManagementAgent:
             When using tools:
             Use sorting_rules to get regional disposal guidelines
             Use eco_tips for sustainable alternatives
-            
+            Only use web_search if the knowledge base doesn't have sufficient information
 
             Always provide a final answer even if you don't find complete information. Be concise and practical."""
-            # 1. Start with waste_classifier to identify the waste type
+
             
-            #Only use web_search if the knowledge base doesn't have sufficient information
+            
 
         self.agent = initialize_agent(
             tools=tools,
@@ -74,7 +72,6 @@ class WasteManagementAgent:
     def get_available_tools(self) -> List[str]:
         """Get list of available tool names"""
         return [
-            "waste_classifier - Classify waste items",
             "sorting_rules - Get regional sorting rules", 
             "eco_tips - Get eco-friendly alternatives",
             "web_search - Search for current information"
