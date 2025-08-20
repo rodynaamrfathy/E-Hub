@@ -102,7 +102,6 @@ class SortingRules:
         parts = []
         for k, v in entry.items():
             if k == "examples" and isinstance(v, list):
-                # Give more weight to examples as they're most relevant for matching
                 parts.extend([f"example: {ex}" for ex in v])
             elif isinstance(v, dict):
                 parts.append(self._flatten_entry(v))
