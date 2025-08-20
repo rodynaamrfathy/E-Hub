@@ -55,20 +55,3 @@ class agent_embedding_module:
 
         return sentence_embeddings
 
-# Example usage
-if __name__ == "__main__":
-    config = agent_embedding_module()
-    print(config.summary())
-
-    sentences = [
-        "This is an example sentence.",
-        "Each sentence is converted.",
-        "Embedding models capture semantic meaning.",
-        "This is unrelated to the others."
-    ]
-
-    embeddings = config.embed(sentences)
-
-    print("\nSentence Embeddings:")
-    print(embeddings)
-    print(embeddings.shape)
