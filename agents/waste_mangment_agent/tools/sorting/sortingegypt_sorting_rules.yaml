@@ -51,7 +51,7 @@ egypt:
       - VeryNile plastic collection
     HDPE_2:
       examples:
-      - Milk jugs
+      - Milk bottle
       - Detergent bottles
       do:
       - Rinse and recycle where accepted
