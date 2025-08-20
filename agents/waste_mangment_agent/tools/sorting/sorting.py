@@ -3,6 +3,8 @@ import yaml
 import logging
 from typing import Dict, Tuple, Optional, Any
 from fuzzywuzzy import process, fuzz
+from langchain.tools import StructuredTool
+from langchain.tools import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -217,16 +219,14 @@ class SortingRules:
             response.append("")
 
         return "\n".join(response)
-
-
-sorter = SortingRules()
-
-print(sorter.get_sorting_guidance("plastic bottle"))
-print("----")
-print(sorter.get_sorting_guidance("milk bottle"))
-print("----")
-print(sorter.get_sorting_guidance("soda can")) 
-print("----")
-print(sorter.get_sorting_guidance("oil bottles")) 
-print("----")
-print(sorter.get_sorting_guidance("plastic plates")) 
+    def get_tool(self) -> Tool:
+        """Return LangChain Tool for integration."""
+        return Tool.from_function(
+            name="waste_sorting_rules",
+            description=(
+                "Get comprehensive Egypt-specific waste sorting and disposal guidance. "
+                "Input should be the name of a waste item (e.g., 'plastic bottle', 'old phone', 'expired medicine'). "
+                "Returns detailed sorting instructions including preparation steps, disposal routes, and drop-off locations."
+            ),
+            func=self.get_sorting_guidance
+        )

@@ -39,8 +39,6 @@ class WasteManagementAgent:
 
             Always provide a final answer even if you don't find complete information. Be concise and practical."""
 
-            
-            
 
         self.agent = initialize_agent(
             tools=tools,
