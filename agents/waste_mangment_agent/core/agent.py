@@ -14,9 +14,9 @@ class WasteManagementAgent:
         
         # Initialize tools
         # self.waste_classifier = WasteClassifier()
-        self.sorting_rules = SortingRules()
+        # self.sorting_rules = SortingRules()
         # self.eco_tips = EcoTips()
-        self.web_search = ExaSearch()
+        # self.web_search = ExaSearch()
         
         # Initialize agent
         self._setup_agent()
@@ -26,8 +26,8 @@ class WasteManagementAgent:
         tools = [
             # self.waste_classifier.get_tool(),
             self.sorting_rules.get_tool(),
-            # self.eco_tips.get_tool(),
-            self.web_search.get_tool()
+            # # self.eco_tips.get_tool(),
+            # self.web_search.get_tool()
         ]
         
         # Custom prompt to guide the agent better
@@ -35,19 +35,20 @@ class WasteManagementAgent:
 
             When using tools:
             Use sorting_rules to get regional disposal guidelines 
-            Only use web_search if the knowledge base doesn't have sufficient information
+            
 
             Always provide a final answer even if you don't find complete information. Be concise and practical."""
             # 1. Start with waste_classifier to identify the waste type
             # 3. Use eco_tips for sustainable alternatives
+            #Only use web_search if the knowledge base doesn't have sufficient information
 
         self.agent = initialize_agent(
             tools=tools,
             llm=self.llm,
             agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True,
-            max_iterations=4,
-            max_execution_time=60, 
+            max_iterations=5,
+            max_execution_time=80, 
             early_stopping_method="generate",
             handle_parsing_errors=True,
             agent_kwargs={
