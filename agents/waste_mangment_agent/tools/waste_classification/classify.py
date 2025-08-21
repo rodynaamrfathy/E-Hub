@@ -1,75 +1,84 @@
 import os
-from google import genai
-import base64
-import os
-from google import genai
-from google.genai import types
-
+import google.generativeai as genai
+from PIL import Image
 from ...core.config import Config
+from langchain.tools import Tool
+
 
 class WasteClassifier:
-    def __init__(self):
-        """Initialize the waste classifier with Google Gemini client."""
-        
-        self.client = genai.Client(api_key=self.api_key)
+    def __init__(self, temperature: float = 0.0):
+        """Initialize the waste classifier with Google Gemini."""
         self.config = Config()
         self.api_key = self.config.GOOGLE_API_KEY
-        selfmodel = self.config.classification_model
+        self.model_name = self.config.classification_model
 
-    def classify(self, input_text: str = None, image_path: str = None) -> str:
-        """
-        Classify waste based on text or image.
-        - input_text: a description of the item (e.g., 'plastic bottle')
-        - image_path: optional image file path for classification
-        """
-        parts = []
-        if input_text:
-            parts.append(Part.from_text(text=input_text))
+        # Configure Gemini
+        genai.configure(api_key=self.api_key)
 
-        if image_path and os.path.exists(image_path):
-            with open(image_path, "rb") as f:
-                img_bytes = f.read()
-            parts.append(
-                Part.from_bytes(
-                    data=img_bytes,
-                    mime_type="image/png",  
-                )
-            )
-
-        contents = [
-            Content(
-                role="user",
-                parts=parts,
-            ),
-        ]
-
-        tools = [
-            Tool(googleSearch=GoogleSearch())
-        ]
-
-        config = GenerateContentConfig(
-            thinking_config=ThinkingConfig(thinking_budget=-1),
-            tools=tools,
+        # Add temperature control
+        self.model = genai.GenerativeModel(
+            model_name=self.model_name,
+            generation_config={"temperature": temperature}
         )
+    
+    def _prepare_image(self, image_path: str):
+        """
+        Prepares the image for classification by opening and resizing it to 200x200.
+        """
+        img = Image.open(image_path)
+        img = img.resize((200, 200))
+        return img
 
-        response_text = ""
-        for chunk in self.client.models.generate_content_stream(
-            model=self.model,
-            contents=contents,
-            config=config,
-        ):
-            if chunk.text:
-                response_text += chunk.text
+    def _classify_internal(self, image_path: str) -> str:
+        """Core logic for classification (not exposed directly)."""
+        try:
+            img = self._prepare_image(image_path)
 
-        return response_text.strip()
+            prompt = """
+            Look at this image carefully and identify the main waste item shown. 
+            Return only the most specific and appropriate item name, without explanation. 
+            If you cannot identify it, return 'Unclassifiable'.
+            """
 
-if __name__ == "__main__":
-    classifier = WasteClassifier()
+            response = self.model.generate_content([img, prompt])
 
-    # Example 1: Text classification
-    result = classifier.classify(input_text="agents/waste_mangment_agent/tools/waste_classification/testing_photos/glass.png")
-    print("Text Classification:", result)
+            if response.candidates and response.candidates[0].content.parts:
+                return response.candidates[0].content.parts[0].text.strip()
+            return "Unclassifiable"
 
-    # Example 2: Image classification
-    result = classifier.classify(image_path="agents/waste_mangment_agent/tools/waste_classification/testing_photos/tires.png")
-    print("Image Classification:", result)
+        except Exception:
+            return "Unclassifiable"
+
+    def classify_waste(self, image_path: str) -> str:
+        """Public method exposed to LangChain Tool."""
+        return self._classify_internal(image_path)
+
+    def get_tool(self) -> Tool:
+        """Return LangChain Tool for integration."""
+        return Tool.from_function(
+            name="waste_classification",
+            description=(
+                "Classify a waste item from an image file path into categories "
+                "such as Plastic, Paper, Organic, Glass, Metal, or E-waste."
+            ),
+            func=self.classify_waste
+        )
+        
+
+# if __name__ == "__main__":
+
+#     classifier = WasteClassifier()
+    
+#     # Test images
+#     test_images = [
+#         "agents/waste_mangment_agent/tools/waste_classification/testing_photos/glass.png",
+#         "agents/waste_mangment_agent/tools/waste_classification/testing_photos/pizza_box.png", 
+#         "agents/waste_mangment_agent/tools/waste_classification/testing_photos/plastic_cup.png",
+#         "agents/waste_mangment_agent/tools/waste_classification/testing_photos/tires.png",
+#         "agents/waste_mangment_agent/tools/waste_classification/testing_photos/toothbrush.png"
+#     ]
+    
+#     for img_path in test_images:
+#         print(f"\n--- Testing {os.path.basename(img_path)} ---")
+#         result = classifier.classify_waste(img_path)
+#         print("Simple Classification →", result)

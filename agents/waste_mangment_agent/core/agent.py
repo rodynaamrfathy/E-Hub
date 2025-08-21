@@ -5,6 +5,7 @@ from .config import Config
 from ..tools.search.exa_search import ExaSearch
 from ..tools.sorting.sorting import SortingRules
 from ..tools.eco_friendly_alt.eco_friendly_alts import EcoTips
+from ..tools.waste_classification.classify import WasteClassifier
 
 class WasteManagementAgent:
     """Main waste management agent orchestrator"""
@@ -18,6 +19,7 @@ class WasteManagementAgent:
         self.sorting_rules = SortingRules()
         self.eco_tips = EcoTips()
         self.web_search = ExaSearch()
+        self.waste_classifier = WasteClassifier(temperature=0.0)
         
         # Initialize agent
         self._setup_agent()
@@ -34,13 +36,15 @@ class WasteManagementAgent:
         tools = [
             self.sorting_rules.get_tool(),
             self.eco_tips.get_tool(),
-            self.web_search.get_tool()
+            self.web_search.get_tool(),
+            self.waste_classifier.get_tool()
         ]
         
         # Custom prompt to guide the agent better
         system_prompt = """You are a helpful waste management assistant. Your goal is to provide clear, actionable advice about waste disposal and recycling.
 
             When using tools:
+            use waste_classification to classify waste items from images
             Use sorting_rules to get regional disposal guidelines
             Use eco_tips for sustainable alternatives
             Only use web_search if the knowledge base doesn't have sufficient information
