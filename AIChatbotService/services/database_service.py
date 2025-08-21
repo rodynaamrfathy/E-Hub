@@ -113,9 +113,22 @@ class DatabaseService:
     # ---------------------------
     # Embeddings
     # ---------------------------
-    async def create_embedding(self, content: str, embedding: list, meta_data: dict = None) -> Embedding:
+    async def create_embedding(
+        self, 
+        content: str, 
+        embedding: list, 
+        user_id: str, 
+        conv_id: Optional[str] = None, 
+        meta_data: dict = None
+    ) -> Embedding:
         async with db_manager.get_session() as session:
-            emb = Embedding(content=content, embedding=embedding, meta_data=meta_data or {})
+            emb = Embedding(
+                content=content,
+                embedding=embedding,
+                meta_data=meta_data or {},
+                user_id=uuid.UUID(user_id) if isinstance(user_id, str) else user_id,
+                conv_id=uuid.UUID(conv_id) if conv_id else None
+            )
             session.add(emb)
             await session.commit()
             await session.refresh(emb)
@@ -126,6 +139,18 @@ class DatabaseService:
             stmt = select(Embedding).where(Embedding.id == uuid.UUID(emb_id))
             result = await session.execute(stmt)
             return result.scalar_one_or_none()
+
+    async def get_user_embeddings(self, user_id: str) -> List[Embedding]:
+        async with db_manager.get_session() as session:
+            stmt = select(Embedding).where(Embedding.user_id == uuid.UUID(user_id))
+            result = await session.execute(stmt)
+            return result.scalars().all()
+
+    async def get_conversation_embeddings(self, conv_id: str) -> List[Embedding]:
+        async with db_manager.get_session() as session:
+            stmt = select(Embedding).where(Embedding.conv_id == uuid.UUID(conv_id))
+            result = await session.execute(stmt)
+            return result.scalars().all()
 
     async def delete_embedding(self, emb_id: str) -> bool:
         async with db_manager.get_session() as session:
