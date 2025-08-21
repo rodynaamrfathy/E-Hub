@@ -1,4 +1,5 @@
 from langchain_ollama import ChatOllama
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import initialize_agent, AgentType
 from typing import List
 from .config import Config
@@ -11,7 +12,8 @@ class WasteManagementAgent:
     
     def __init__(self, region: str = Config.DEFAULT_REGION):
         self.region = region
-        self.llm = ChatOllama(model=Config.OLLAMA_MODEL)
+        # self.llm = ChatOllama(model=Config.OLLAMA_MODEL)
+        self.llm=self._setup_llm()
         
         # Initialize tools
         self.sorting_rules = SortingRules()
@@ -20,7 +22,14 @@ class WasteManagementAgent:
         
         # Initialize agent
         self._setup_agent()
-    
+    def _setup_llm(self):
+        """Setup Gemini LLM"""
+        self.llm = ChatGoogleGenerativeAI(
+            model=Config.GEMINI_MODEL,
+            google_api_key=Config.GOOGLE_API_KEY,
+            temperature=0.3
+        )
+        return self.llm
     def _setup_agent(self):
         """Setup the LangChain agent with tools"""
         tools = [
