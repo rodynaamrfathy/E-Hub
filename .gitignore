@@ -17,3 +17,6 @@ logs
 json
 *.docx
 knowledge_base
+agents/cache
+agents/waste_mangment_agent/cache
+agents/waste_mangment_agent/tools/waste_classification/testing_photos
