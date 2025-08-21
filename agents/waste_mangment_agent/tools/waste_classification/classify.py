@@ -46,6 +46,7 @@ class WasteClassifier:
 
         except Exception:
             return "Unclassifiable"
+    
 
             
 
