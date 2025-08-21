@@ -1,75 +1,71 @@
 import os
-from google import genai
-import base64
-import os
-from google import genai
-from google.genai import types
-
+import google.generativeai as genai
+from PIL import Image
 from ...core.config import Config
 
 class WasteClassifier:
-    def __init__(self):
-        """Initialize the waste classifier with Google Gemini client."""
-        
-        self.client = genai.Client(api_key=self.api_key)
+    def __init__(self, temperature: float = 0):
+        """Initialize the waste classifier with Google Gemini."""
         self.config = Config()
         self.api_key = self.config.GOOGLE_API_KEY
-        selfmodel = self.config.classification_model
+        self.model_name = self.config.classification_model
 
-    def classify(self, input_text: str = None, image_path: str = None) -> str:
-        """
-        Classify waste based on text or image.
-        - input_text: a description of the item (e.g., 'plastic bottle')
-        - image_path: optional image file path for classification
-        """
-        parts = []
-        if input_text:
-            parts.append(Part.from_text(text=input_text))
+        # Configure Gemini
+        genai.configure(api_key=self.api_key)
 
-        if image_path and os.path.exists(image_path):
-            with open(image_path, "rb") as f:
-                img_bytes = f.read()
-            parts.append(
-                Part.from_bytes(
-                    data=img_bytes,
-                    mime_type="image/png",  
-                )
-            )
-
-        contents = [
-            Content(
-                role="user",
-                parts=parts,
-            ),
-        ]
-
-        tools = [
-            Tool(googleSearch=GoogleSearch())
-        ]
-
-        config = GenerateContentConfig(
-            thinking_config=ThinkingConfig(thinking_budget=-1),
-            tools=tools,
+        # Add temperature control
+        self.model = genai.GenerativeModel(
+            model_name=self.model_name
         )
+    
+    def _prepare_image(self, image_path: str):
+        """
+        Prepares the image for classification by opening and resizing it to 200x200.
+        """
+        img = Image.open(image_path)
+        img = img.resize((200, 200))
+        return img
 
-        response_text = ""
-        for chunk in self.client.models.generate_content_stream(
-            model=self.model,
-            contents=contents,
-            config=config,
-        ):
-            if chunk.text:
-                response_text += chunk.text
+    def classify_waste(self, img):
+        """
+        Classify a waste item into categories like Plastic, Paper, Organic, Glass, Metal, E-waste, or Unclassifiable.
+        Accepts either a path to an image file or a PIL Image object.
+        """
+        try:
+            # Simple prompt for classification
+            prompt = """
+            Look at this image and classify the item. Return only the item name.
+            """
 
-        return response_text.strip()
+            response = self.model.generate_content([img, prompt])
+
+            # Extract result text
+            if response.candidates and response.candidates[0].content.parts:
+                return response.candidates[0].content.parts[0].text.strip()
+            return "Unclassifiable"
+
+        except Exception:
+            return "Unclassifiable"
+
+            
+
+
+
 
 if __name__ == "__main__":
+
     classifier = WasteClassifier()
-
-    # Example 1: Text classification
-    result = classifier.classify(input_text="agents/waste_mangment_agent/tools/waste_classification/testing_photos/glass.png")
-    print("Text Classification:", result)
-
-    # Example 2: Image classification
-    result = classifier.classify(image_path="agents/waste_mangment_agent/tools/waste_classification/testing_photos/tires.png")
-    print("Image Classification:", result)
+    
+    # Test images
+    test_images = [
+        "agents/waste_mangment_agent/tools/waste_classification/testing_photos/glass.png",
+        "agents/waste_mangment_agent/tools/waste_classification/testing_photos/pizza_box.png", 
+        "agents/waste_mangment_agent/tools/waste_classification/testing_photos/plastic_cup.png",
+        "agents/waste_mangment_agent/tools/waste_classification/testing_photos/tires.png",
+        "agents/waste_mangment_agent/tools/waste_classification/testing_photos/toothbrush.png"
+    ]
+    
+    for img_path in test_images:
+        print(f"\n--- Testing {os.path.basename(img_path)} ---")
+        result = classifier.classify_waste(img_path)
+        print("Simple Classification →", result)

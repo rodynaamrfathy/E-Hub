@@ -14,12 +14,12 @@ class Config:
     
     # API Keys
     EXA_API_KEY = os.getenv("EXA_API_KEY", "7b2f3660-a49f-45be-b6ff-ee4d02668f7b")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyAcVYJ4n0peC5R1n_kZaqYAtF8WeHV07ZM")
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyCZqvIhnBATPBu-WS9bJJ4BL8tlC0LRSR0")
     
     # Model settings
     OLLAMA_MODEL = "llama3:8b"
     classification_model= "gemini-2.5-pro"
-    GEMINI_MODEL="models/gemini-2.0-flash"
+    GEMINI_MODEL="gemini-2.5-pro"
     
     # Default settings
     DEFAULT_REGION = "egypt"
