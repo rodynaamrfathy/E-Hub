@@ -14,7 +14,7 @@ class Config:
     
     # API Keys
     EXA_API_KEY = os.getenv("EXA_API_KEY", "7b2f3660-a49f-45be-b6ff-ee4d02668f7b")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyCUXn2DwojUZqsxoqiaoibQsWJaMEOmEuQ")
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyAcVYJ4n0peC5R1n_kZaqYAtF8WeHV07ZM")
     
     # Model settings
     OLLAMA_MODEL = "llama3:8b"
@@ -30,3 +30,4 @@ class Config:
     def get_knowledge_file(cls, filename: str) -> Path:
         """Get path to knowledge base file"""
         return cls.KNOWLEDGE_BASE_DIR / filename
+    
