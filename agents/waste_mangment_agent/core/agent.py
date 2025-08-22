@@ -28,7 +28,7 @@ class WasteManagementAgent:
         self.llm = ChatGoogleGenerativeAI(
             model=Config.GEMINI_MODEL,
             google_api_key=Config.GOOGLE_API_KEY,
-            temperature=0.3
+            temperature=0.2
         )
         return self.llm
     def _setup_agent(self):
@@ -41,15 +41,22 @@ class WasteManagementAgent:
         ]
         
         # Custom prompt to guide the agent better
-        system_prompt = """You are a helpful waste management assistant. Your goal is to provide clear, actionable advice about waste disposal and recycling.
+        system_prompt = """
+        You are a helpful waste management assistant. 
+        Your goal is to provide clear, actionable advice about waste disposal, recycling, and sustainable alternatives.
 
-            When using tools:
-            use waste_classification to classify waste items from images
-            Use sorting_rules to get regional disposal guidelines
-            Use eco_tips for sustainable alternatives
-            Only use web_search if the knowledge base doesn't have sufficient information
+        ### Tool Use
+        - Use `waste_classification` to classify items from images.
+        - Use `sorting_rules` to get regional disposal guidelines.
+        - Use `eco_tips` to suggest sustainable alternatives.
+        - Use `web_search` only if other tools cannot provide sufficient information.
 
-            Always provide a final answer even if you don't find complete information. Be concise and practical."""
+        ### Guidelines
+        - Always provide a **final answer** for the user, even if tool results are incomplete. 
+        - If tools do not provide an answer, fall back to your own knowledge to guide the user.
+        - Keep answers **concise, practical, and easy to follow**.
+        - Prioritize safe and eco-friendly disposal methods.
+        """
 
 
         self.agent = initialize_agent(
@@ -57,7 +64,7 @@ class WasteManagementAgent:
             llm=self.llm,
             agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True,
-            max_iterations=5,
+            max_iterations=10,
             max_execution_time=80, 
             early_stopping_method="generate",
             handle_parsing_errors=True,
