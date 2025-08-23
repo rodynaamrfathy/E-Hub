@@ -78,18 +78,12 @@ class ExaSearch:
             )
 
     def get_tool(self) -> Tool:
-        """
-        Convert this class into a LangChain-compatible Tool.
-
-        This allows an LLM (via LangChain) to invoke the `search` method
-        as a tool for retrieving up-to-date web search results.
-
-        Returns:
-            Tool: A LangChain Tool object that wraps the `search` function.
-        """
         return Tool.from_function(
             name="web_search",
-            description= "Use this tool to search the web for real-time waste management, recycling and sustainability information",
-        
-            func=self.search)
-        
+            description=(
+                "Search the web for up-to-date sustainability, recycling, and waste management facts. "
+                "Always call this tool when external data is required. "
+                "Input should be a short search query string."
+            ),
+            func=self.search
+        )

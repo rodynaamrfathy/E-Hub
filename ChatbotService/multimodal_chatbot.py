@@ -10,8 +10,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage, AIMessage, BaseMessage
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage
-from chatmessage import ChatMessage
-from chatbot_config import API_KEY , CHATBOT_MODEL, MAX_HISTORY
+from ChatbotService.chatmessage import ChatMessage
+from ChatbotService.chatbot_config import API_KEY , CHATBOT_MODEL, MAX_HISTORY
 
 class GeminiMultimodalChatbot:
     """multimodal chatbot with history awareness"""
@@ -23,7 +23,7 @@ class GeminiMultimodalChatbot:
         self.llm = ChatGoogleGenerativeAI(
             model=self.model_name,
             google_api_key=API_KEY,
-            temperature=0.3,
+            temperature=0.1,
             convert_system_message_to_human=True
         )
         
