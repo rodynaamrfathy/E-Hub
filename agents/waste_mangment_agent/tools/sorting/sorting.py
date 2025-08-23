@@ -83,10 +83,14 @@ class SortingRules:
         logger.info(f"Loaded {len(self.keyword_map)} keywords into map")
 
     def _load_KB(self):
-        kb_path = '/Users/maryamsaad/Documents/Agentic_Rag/agents/waste_mangment_agent/tools/sorting/sortingegypt_sorting_rules.yaml'
+        # Get directory of this file (sorting.py)
+        base_dir = os.path.dirname(__file__)
+        kb_path = os.path.join(base_dir, "sortingegypt_sorting_rules.yaml")
+
         if not os.path.exists(kb_path):
             raise FileNotFoundError(f"KB not found: {kb_path}")
-        with open(kb_path, 'r', encoding='utf-8') as f:
+
+        with open(kb_path, "r", encoding="utf-8") as f:
             return yaml.load(f, Loader=yaml.FullLoader)
 
     def _build_keyword_map(self) -> Dict[str, Dict[str, Any]]:
