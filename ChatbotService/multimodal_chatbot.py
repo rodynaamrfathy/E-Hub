@@ -17,10 +17,6 @@ class GeminiMultimodalChatbot:
     """multimodal chatbot with history awareness"""
     def __init__(self, max_history= 20, session_id = None):
 
-        self.api_key = "AIzaSyCZqvIhnBATPBu-WS9bJJ4BL8tlC0LRSR0"
-        if not self.api_key:
-            raise ValueError("Google API key is required. Set GOOGLE_API_KEY environment variable or pass api_key parameter.")
-        
         self.model_name = CHATBOT_MODEL
         self.max_history = MAX_HISTORY
         self.session_id = str(uuid.uuid4())
