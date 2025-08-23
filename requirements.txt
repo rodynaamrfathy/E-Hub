@@ -28,3 +28,7 @@ requests
 langchain_tavily
 exa_py
 langchain-google-genai
+langgraph 
+langsmith
+langchain-google-genai 
+google-generativeai 
