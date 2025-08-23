@@ -1,7 +1,6 @@
 import os
 import re
 import time
-
 import asyncio
 from ChatbotService.multimodal_chatbot import GeminiMultimodalChatbot
 from agents.waste_mangment_agent.core.agent import WasteManagementAgent
@@ -49,22 +48,6 @@ async def process_query_option1(chatbot, agent, user_input, images, system_instr
     return merged["response"] if merged.get("success") else f"{chatbot_text}\n\n🌱 Agent: {agent_response}"
 
 
-async def process_query_option2(chatbot, agent, user_input, images):
-    # Start agent in background
-    agent_task = asyncio.create_task(run_agent(agent, user_input))
-
-    # Chatbot responds instantly
-    chatbot_response = await run_chatbot(chatbot, user_input, images)
-    chatbot_text = chatbot_response["response"] if chatbot_response.get("success") else "⚠️ Chatbot failed."
-    
-    print("\n🤖 Assistant: ", end="", flush=True)
-    stream_print(chatbot_text, delay=0.02)
-
-    # Later: agent result streams in
-    agent_response = await agent_task
-    print("\n🌱 Agent Insight: ", end="", flush=True)
-    stream_print(agent_response, delay=0.01)
-
 
 def main():
     print("🌍 Recycling & Sustainability Assistant (Parallel Modes)")
@@ -76,11 +59,9 @@ def main():
     system_instruction = """
     You are a Recycling & Sustainability Assistant.
     - Combine factual insights from the WasteManagementAgent with a friendly conversational tone.
-    - Encourage eco-friendly actions.
     """
 
     print("\nType 'quit' to exit\n")
-    mode = input("Choose mode: [1] Merge (polished answer) [2] Two-phase streaming (fastest) → ").strip()
 
     while True:
         try:
@@ -92,18 +73,12 @@ def main():
                 continue
 
             images = extract_image_paths(user_input)
-
-            if mode == "1":
-                # Option 1: chatbot rewrites agent’s response
-                final_response = asyncio.run(
+            # Option 1: chatbot rewrites agent’s response
+            final_response = asyncio.run(
                     process_query_option1(chatbot, agent, user_input, images, system_instruction)
                 )
-                print(f"\n🤖 Assistant: {final_response}")
-            else:
-                # Option 2: fast streaming two-phase response
-                asyncio.run(process_query_option2(chatbot, agent, user_input, images))
+            print(f"\n🤖 Assistant: {final_response}")
 
-        except KeyboardInterrupt:
             print("\n👋 Goodbye!")
             break
         except Exception as e:
