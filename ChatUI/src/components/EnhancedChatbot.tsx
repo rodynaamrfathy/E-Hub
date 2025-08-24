@@ -16,7 +16,6 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
   const [showHistory, setShowHistory] = useState(false);
   const [showUploadHistory, setShowUploadHistory] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
-  const [isBotLoading, setIsBotLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +63,7 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
   const handleSendMessage = async (customMessage?: string) => {
     const messageText = customMessage || chatInput;
     if (!messageText.trim() || !currentConversation) return;
-
+    
     // Add user message
     const updatedConversation = chatHistoryService.addMessage(currentConversation, {
       text: messageText,
@@ -74,34 +73,18 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
     setCurrentConversation(updatedConversation);
     updateConversationInList(updatedConversation);
     setChatInput('');
-
-    // Backend integration: send message to API and get bot response
-    setIsBotLoading(true);
-    try {
-      // Replace with your backend API call
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText, conversationId: updatedConversation.id })
-      });
-      const data = await response.json();
-      const botResponse = data.reply || 'Sorry, no response from backend.';
+    
+    // Simulate bot response
+    setTimeout(() => {
+      const botResponse = getBotResponse(messageText);
       const finalConversation = chatHistoryService.addMessage(updatedConversation, {
         text: botResponse,
         sender: 'bot'
       });
+      
       setCurrentConversation(finalConversation);
       updateConversationInList(finalConversation);
-    } catch (error) {
-      const errorConversation = chatHistoryService.addMessage(updatedConversation, {
-        text: '❌ Error communicating with backend.',
-        sender: 'bot'
-      });
-      setCurrentConversation(errorConversation);
-      updateConversationInList(errorConversation);
-    } finally {
-      setIsBotLoading(false);
-    }
+    }, 1000);
   };
 
   const updateConversationInList = (updatedConv: ChatConversation) => {
@@ -425,13 +408,6 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
             <div className="flex justify-start">
               <div className="bg-gray-100 text-gray-800 px-3 py-2 rounded-lg">
                 <p className="text-sm">🔄 Processing your file...</p>
-              </div>
-            </div>
-          )}
-          {isBotLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 text-gray-800 px-3 py-2 rounded-lg">
-                <p className="text-sm">🤖 Bot is thinking...</p>
               </div>
             </div>
           )}

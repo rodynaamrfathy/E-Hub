@@ -1,15 +1,16 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models import Message
+from typing import List
 
-def get_conversation_history(db: Session, conversation_id: int):
+def get_conversation_history(db: Session, conv_id: str) -> List[dict]:
     """
     Fetch all messages for a given conversation, ordered by created_at.
-    Includes both text and image messages.
-    Separates User and AI clearly.
+    Includes text messages and any attached images with classification.
     """
     messages = (
         db.query(Message)
-        .filter(Message.conversation_id == conversation_id)
+        .filter(Message.conv_id == conv_id)
+        .options(joinedload(Message.images).joinedload("classification"))
         .order_by(Message.created_at.asc())
         .all()
     )
@@ -17,17 +18,27 @@ def get_conversation_history(db: Session, conversation_id: int):
     history = []
     for msg in messages:
         entry = {
-            "role": "user" if msg.sender_type == "user" else "ai",
+            "role": msg.sender,  # "user" or "assistant"
             "timestamp": msg.created_at,
-            "type": msg.message_type,  # "text" or "image"
+            "type": "text" if not msg.images else "image",
+            "content": msg.content
         }
 
-        if msg.message_type == "text":
-            entry["content"] = msg.content
-        elif msg.message_type == "image":
-            entry["image_url"] = msg.image_url
-            if msg.content:  # optional description
-                entry["description"] = msg.content
+        # Attach images if any
+        if msg.images:
+            entry["images"] = []
+            for img in msg.images:
+                img_entry = {
+                    "image_id": img.image_id,
+                    "mime_type": img.mime_type,
+                    "image_base64": img.image_base64
+                }
+                if img.classification:
+                    img_entry.update({
+                        "label": img.classification.label,
+                        "recycle_instructions": img.classification.recycle_instructions
+                    })
+                entry["images"].append(img_entry)
 
         history.append(entry)
 
