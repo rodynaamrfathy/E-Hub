@@ -1,11 +1,10 @@
-import datetime
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel
+from dto.ImageClassificationDTO import ImageClassificationDTO
 
-class ImageClassificationDTO(BaseModel):
-    label: str
-    recycle_instructions: str
+
 
 class ImageDTO(BaseModel):
     image_id: UUID

@@ -1,28 +1,29 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 from models import Image
+from uuid import UUID
 
 class ImageService:
     @staticmethod
-    def create_image(db: Session, msg_id: str, mime_type: str, image_base64: str):
-        image = Image(msg_id=msg_id, mime_type=mime_type, image_base64=image_base64)
+    async def create_image(db: AsyncSession, msg_id: str, mime_type: str, image_base64: str):
+        image = Image(msg_id=UUID(msg_id), mime_type=mime_type, image_base64=image_base64)
         db.add(image)
-        db.commit()
-        db.refresh(image)
+        await db.commit()
+        await db.refresh(image)
         return image
 
     @staticmethod
-    def get_image(db: Session, image_id: str):
-        return db.query(Image).filter(Image.image_id == image_id).first()
+    async def get_image(db: AsyncSession, image_id: str):
+        result = await db.execute(select(Image).filter(Image.image_id == image_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def list_images_by_message(db: Session, msg_id: str):
-        return db.query(Image).filter(Image.msg_id == msg_id).all()
+    async def list_images_by_message(db: AsyncSession, msg_id: str):
+        result = await db.execute(select(Image).filter(Image.msg_id == msg_id))
+        return result.scalars().all()
 
     @staticmethod
-    def delete_image(db: Session, image_id: str):
-        image = db.query(Image).filter(Image.image_id == image_id).first()
-        if image:
-            db.delete(image)
-            db.commit()
-            return True
-        return False
+    async def delete_image(db: AsyncSession, image_id: str):
+        result = await db.execute(delete(Image).filter(Image.image_id == image_id))
+        await db.commit()
+        return result.rowcount > 0

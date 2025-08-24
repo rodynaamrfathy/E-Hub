@@ -5,3 +5,7 @@ class ImageClassificationCreateDTO(BaseModel):
     image_id: UUID
     label: str
     recycle_instructions: str
+
+class ImageClassificationDTO(BaseModel):
+    label: str
+    recycle_instructions: str

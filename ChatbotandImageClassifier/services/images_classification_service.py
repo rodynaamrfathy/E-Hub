@@ -1,33 +1,33 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 from models import ImageClassification
+from uuid import UUID
 
 class ImageClassificationService:
     @staticmethod
-    def create_classification(db: Session, image_id: str, label: str, recycle_instructions: str, confidence: float = None):
+    async def create_classification(db: AsyncSession, image_id: str, label: str, recycle_instructions: str):
         classification = ImageClassification(
-            image_id=image_id,
+            image_id=UUID(image_id),
             label=label,
-            recycle_instructions=recycle_instructions,
-            confidence=confidence
+            recycle_instructions=recycle_instructions
         )
         db.add(classification)
-        db.commit()
-        db.refresh(classification)
+        await db.commit()
+        await db.refresh(classification)
         return classification
 
     @staticmethod
-    def get_classification(db: Session, classification_id: str):
-        return db.query(ImageClassification).filter(ImageClassification.classification_id == classification_id).first()
+    async def get_classification(db: AsyncSession, classification_id: str):
+        result = await db.execute(select(ImageClassification).filter(ImageClassification.classification_id == classification_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def get_classification_by_image(db: Session, image_id: str):
-        return db.query(ImageClassification).filter(ImageClassification.image_id == image_id).first()
+    async def get_classification_by_image(db: AsyncSession, image_id: str):
+        result = await db.execute(select(ImageClassification).filter(ImageClassification.image_id == image_id))
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def delete_classification(db: Session, classification_id: str):
-        classification = db.query(ImageClassification).filter(ImageClassification.classification_id == classification_id).first()
-        if classification:
-            db.delete(classification)
-            db.commit()
-            return True
-        return False
+    async def delete_classification(db: AsyncSession, classification_id: str):
+        result = await db.execute(delete(ImageClassification).filter(ImageClassification.classification_id == classification_id))
+        await db.commit()
+        return result.rowcount > 0

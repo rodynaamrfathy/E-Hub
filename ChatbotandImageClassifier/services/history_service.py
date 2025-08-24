@@ -1,19 +1,24 @@
-from sqlalchemy.orm import Session, joinedload
-from models import Message
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from models import Message, Image, ImageClassification
 from typing import List
+from uuid import UUID
 
-def get_conversation_history(db: Session, conv_id: str) -> List[dict]:
+async def get_conversation_history(db: AsyncSession, conv_id: str) -> List[dict]:
     """
     Fetch all messages for a given conversation, ordered by created_at.
     Includes text messages and any attached images with classification.
     """
-    messages = (
-        db.query(Message)
-        .filter(Message.conv_id == conv_id)
-        .options(joinedload(Message.images).joinedload("classification"))
+    stmt = (
+        select(Message)
+        .filter(Message.conv_id == UUID(conv_id))
+        .options(selectinload(Message.images).selectinload(Image.classification))
         .order_by(Message.created_at.asc())
-        .all()
     )
+    
+    result = await db.execute(stmt)
+    messages = result.scalars().all()
 
     history = []
     for msg in messages:
