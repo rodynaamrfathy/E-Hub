@@ -29,6 +29,13 @@ exa_py
 langchain-google-genai
 langchain-google-genai 
 google-generativeai 
+gymnasium
+gymnasium
+stable-baselines3
+tqdm
+tensorboard
+numpy
+
 # FastAPI and web framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
