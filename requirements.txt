@@ -23,17 +23,12 @@ dotenv
 asyncpg
 more_itertools
 bs4
-langraph
 requests
 exa_py
-langchain-google-genai
 langchain-google-genai 
 google-generativeai 
-gymnasium
-gymnasium
-stable-baselines3
-tqdm
 tensorboard
+<<<<<<< HEAD
 numpy
 
 # FastAPI and web framework
@@ -74,3 +69,5 @@ flake8==6.1.0
 # Security
 passlib[bcrypt]==1.7.4
 cryptography==41.0.8
+=======
+>>>>>>> 185a743c (Clean up requirements.txt by removing unused dependencies, including langraph, gymnasium, stable-baselines3, and numpy, to streamline project requirements.)
