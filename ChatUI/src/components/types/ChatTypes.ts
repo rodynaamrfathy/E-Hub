@@ -9,7 +9,7 @@ export interface ChatMessage {
 export interface FileAttachment {
   id: string;
   name: string;
-  type: 'pdf' | 'image';
+  type: 'image';
   size: number;
   url: string;
   uploadedAt: Date;

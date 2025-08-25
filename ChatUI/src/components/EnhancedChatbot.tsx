@@ -19,12 +19,6 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const quickActions = [
-    { icon: FileText, label: 'Summarization', action: 'summarization' },
-    { icon: HelpCircle, label: 'Q&A', action: 'qa' },
-    { icon: MessageCircle, label: 'Chat', action: 'chat' },
-    { icon: Target, label: 'TopicSpecific', action: 'topic' },
-  ];
 
   // Load chat history on component mount
   useEffect(() => {
@@ -65,17 +59,6 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
     }
   }, [uploadHistory]);
 
-  const handleQuickAction = (action: string) => {
-    const actionMessages: { [key: string]: string } = {
-      summarization: 'Please provide a summary of the latest sustainability trends',
-      qa: 'I have questions about environmental topics',
-      chat: 'Let\'s have a conversation about eco-friendly practices',
-      topic: 'I need specific information about a sustainability topic'
-    };
-    
-    const messageText = actionMessages[action];
-    handleSendMessage(messageText);
-  };
 
   const handleSendMessage = async (customMessage?: string) => {
     const messageText = customMessage || chatInput;
@@ -385,24 +368,6 @@ export function EnhancedChatbot({ showChatbot, setShowChatbot }: EnhancedChatbot
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex flex-wrap gap-2">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.action}
-                  onClick={() => handleQuickAction(action.action)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-[#01a669] hover:text-white rounded-lg text-sm transition-colors"
-                >
-                  <Icon className="w-3 h-3" />
-                  <span className="text-xs">{action.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
         
         {/* Messages */}
         <div className="flex-1 p-4 overflow-y-auto space-y-3">
