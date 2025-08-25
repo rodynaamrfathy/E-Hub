@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Form, UploadFile, File
 import asyncio
 from ChatbotService.multimodal_chatbot import GeminiMultimodalChatbot
-from agents.waste_mangment_agent.core.agent import WasteManagementAgent
 
 
 # ----------------------------
