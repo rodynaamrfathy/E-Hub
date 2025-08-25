@@ -29,3 +29,9 @@ exa_py
 langchain-google-genai
 langchain-google-genai 
 google-generativeai 
+gymnasium
+gymnasium
+stable-baselines3
+tqdm
+tensorboard
+numpy
