@@ -27,6 +27,7 @@ requests
 exa_py
 langchain-google-genai 
 google-generativeai 
+<<<<<<< HEAD
 tensorboard
 <<<<<<< HEAD
 numpy
@@ -71,3 +72,11 @@ passlib[bcrypt]==1.7.4
 cryptography==41.0.8
 =======
 >>>>>>> 185a743c (Clean up requirements.txt by removing unused dependencies, including langraph, gymnasium, stable-baselines3, and numpy, to streamline project requirements.)
+=======
+gymnasium
+gymnasium
+stable-baselines3
+tqdm
+tensorboard
+numpy
+>>>>>>> 3bb4499 (Add new environment and training files for waste management agent, including KnowledgeEnv class and training scripts. Update requirements.txt to include gymnasium, stable-baselines3, tqdm, tensorboard, and numpy. Add workflow image for agent process visualization.)
