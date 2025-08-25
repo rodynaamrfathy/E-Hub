@@ -23,9 +23,8 @@ dotenv
 asyncpg
 more_itertools
 bs4
-langraph
 requests
 exa_py
-langchain-google-genai
 langchain-google-genai 
 google-generativeai 
+tensorboard
