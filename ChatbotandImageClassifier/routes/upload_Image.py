@@ -9,8 +9,8 @@ from services.message_service import MessageService
 from services.images_classification_service import ImageClassificationService
 from dto.ImageDTO import ImageUploadResponseDTO
 from dto.MessageDTO import MessageResponseDTO
-from utils.botutils import process_query
-from core.initializers import chatbot, agent
+# from utils.botutils import process_query
+# from core.initializers import chatbot, agent
 
 router = APIRouter(tags=["Upload"])
 

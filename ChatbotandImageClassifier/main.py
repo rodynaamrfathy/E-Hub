@@ -10,7 +10,7 @@ from database import db_manager
 from models import Base
 
 # AI instances (imported here to initialize them before routes)
-from core.initializers import chatbot, agent
+# from core.initializers import chatbot
 
 # Routes (imported after AI instances to avoid circular imports)
 from routes.chat import router as chat_router

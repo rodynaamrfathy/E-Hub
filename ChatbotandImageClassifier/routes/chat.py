@@ -14,8 +14,8 @@ from dto import (
 from services.conversation_service import ConversationService
 from services.message_service import MessageService
 from services.history_service import get_conversation_history
-from utils.botutils import process_query
-from core.initializers import chatbot, agent
+# from utils.botutils import process_query
+# from core.initializers import chatbot, agent
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
