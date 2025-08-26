@@ -15,33 +15,41 @@ from ChatbotService.chatbot_config import API_KEY , CHATBOT_MODEL, MAX_HISTORY
 
 class GeminiMultimodalChatbot:
     """multimodal chatbot with history awareness"""
-    def __init__(self, max_history= 20, session_id = None):
 
+    def __init__(self, session_id=None):
         self.model_name = CHATBOT_MODEL
         self.max_history = MAX_HISTORY
-        self.session_id = str(uuid.uuid4())
+        self.session_id = session_id or str(uuid.uuid4())
+
+        # Ensure sessions dir exists
+        os.makedirs(self.SESSIONS_DIR, exist_ok=True)
+
+        self.history_file = os.path.join(self.SESSIONS_DIR, f"session_{self.session_id}.json")
+
         self.llm = ChatGoogleGenerativeAI(
             model=self.model_name,
             google_api_key=API_KEY,
             temperature=0.1,
             convert_system_message_to_human=True
         )
-        
-        # Initialize memory for conversation history
+
+        # LangChain memory
         self.memory = ConversationBufferWindowMemory(
-            k=max_history,
+            k=self.max_history,
             return_messages=True,
             memory_key="chat_history"
         )
-        
-        # Chat history for serialization
+
+        # Serializable chat history
         self.chat_messages = []
-        
+
         # System prompt
         self.system_prompt = """You are a helpful AI assistant powered by Google's Gemini model. 
         You can understand and respond to text, analyze images, and maintain context from our conversation history.
         Be helpful, informative, and engaging in your responses. Keep responses concise but comprehensive."""
-    
+
+        # 🔹 Load past history if exists
+        self.load_session()
 
 
     def prepare_image(self, image, max_size=(256,256)):
@@ -168,23 +176,22 @@ class GeminiMultimodalChatbot:
         """Synchronous wrapper for get_response_async"""
         return asyncio.run(self.get_response_async(user_input, images))
     
-    def clear_history(self):
-        """Clear conversation history"""
-        self.memory.clear()
-        self.chat_messages.clear()
-    
-    def get_chat_history(self) :
-        """Get formatted chat history"""
-        return [msg.to_dict() for msg in self.chat_messages]
-    
-    def save_session(self, filepath: str):
-        """Save current session to file"""
-        session_data = {
-            "session_id": self.session_id,
-            "model_name": self.model_name,
-            "messages": self.get_chat_history(),
-            "created_at": datetime.now().isoformat()
-        }
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(session_data, f, indent=2, ensure_ascii=False)
+
+
+    def load_session(self):
+        """Load previous session from file into memory"""
+        if os.path.exists(self.history_file):
+            with open(self.history_file, "r", encoding="utf-8") as f:
+                session_data = json.load(f)
+                messages = session_data.get("messages", [])
+
+            # Rehydrate chat messages
+            for msg in messages:
+                chat_msg = ChatMessage.from_dict(msg)
+                self.chat_messages.append(chat_msg)
+
+                # Push back into LangChain memory so model sees context
+                if chat_msg.role == "user":
+                    self.memory.chat_memory.add_user_message(chat_msg.content)
+                elif chat_msg.role == "assistant":
+                    self.memory.chat_memory.add_ai_message(chat_msg.content)
