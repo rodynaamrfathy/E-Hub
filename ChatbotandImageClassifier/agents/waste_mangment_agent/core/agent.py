@@ -1,6 +1,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import initialize_agent, AgentType
 from typing import List
+from langchain_core.exceptions import OutputParserException
 from .config import Config
 from ..tools.search.exa_search import ExaSearch
 from ..tools.sorting.sorting import SortingRules
@@ -80,8 +81,19 @@ class WasteManagementAgent:
         enhanced_query = f"[User is in {self.region}] {query}"
             
         # Try to get a response from the agent
-        response = self.agent.run(enhanced_query)
-        return response
+        try:
+            response = self.agent.run(enhanced_query)
+            return response
+        except OutputParserException:
+            # Fall back to direct LLM generation if the agent's output parser fails
+            direct_prompt = (
+                "You are a helpful waste management assistant. Provide a clear, concise answer.\n\n"
+                f"Question: {enhanced_query}"
+            )
+            direct_response = self.llm.invoke(direct_prompt)
+            return getattr(direct_response, "content", str(direct_response))
+        except Exception as e:
+            return f"Sorry, I ran into an issue processing that request: {e}"
             
 
     
