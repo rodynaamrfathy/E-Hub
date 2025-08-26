@@ -5,7 +5,7 @@ import uuid
 import io
 import asyncio
 from PIL import Image
-
+import yaml
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
@@ -47,34 +47,15 @@ class GeminiMultimodalChatbot:
         self.chat_messages = []
 
         # System prompt
-        self.system_prompt = (
-            "You are a helpful AI assistant powered by Google's Gemini model with integrated web search retrieval. "
-            "You can understand and respond to text, analyze images, and maintain context from our conversation history.\n\n"
-            
-            "🔍 WEB SEARCH CAPABILITY (via Exa Search):\n"
-            "When you need current information, recent news, real-time data, or facts you're uncertain about, "
-            "you can trigger the retrieval system by including '[SEARCH: your search query]' anywhere in your response. \n"
-            "The Exa Search retriever will run the query and return summarized results along with titles, highlights, and links to sources.\n\n"
-            
-            "You should use Exa Search retrieval when:\n"
-            "- The user asks about recent events, news, or current affairs\n"
-            "- Real-time data is required (stock prices, weather, sports scores)\n"
-            "- The question involves recent developments in technology, science, or politics\n"
-            "- The user asks about the current status of companies, people, or projects\n"
-            "- You need to fact-check uncertain information\n"
-            "- Any query where freshness of information matters\n\n"
-            
-            "📎 IMPORTANT:\n"
-            "- Always include references (titles + links) in your answer when using retrieved search results.\n"
-            "- Summarize the retrieved content clearly before citing links.\n"
-            "- Combine the retrieved information with your own reasoning.\n"
-            "- If no reliable retrieval results are available, answer using only your internal knowledge.\n"
-        )
-
+        self.system_prompt =  self._load_prompt()
 
         # Load past history
         self._rehydrate_history()
-        
+    def _load_prompt(self):
+        with open("ChatbotandImageClassifier/ChatbotService/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        return data.get("system_prompt", "")
+    
     def _prepare(self, image, max_size=(256, 256)):
         '''Encodes image to base64'''
         try:
