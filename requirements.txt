@@ -14,3 +14,4 @@ requests
 langchain-google-genai 
 google-generativeai 
 tensorboard
+langchain-exa
