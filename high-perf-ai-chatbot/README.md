@@ -1,4 +1,5 @@
-```📂 high-perf-ai-chatbot/
+```
+📂 high-perf-ai-chatbot/
 │── README.md
 │── requirements.txt / pyproject.toml      # Python deps
 │── package.json                           # Frontend deps (React/Vue)
@@ -18,10 +19,10 @@
 │   │
 │   ├── 📂 services/
 │   │   ├── conversation/                  # Orchestration + streaming
-│   │   │   ├── router.py                  # Context Router (RAG vs MCP)
+│   │   │   ├── router.py                  # Route: text-only vs text+image
 │   │   │   ├── streaming.py               # LLM token streaming logic
-│   │   │   ├── session_manager.py         # Session state (Postgres + Redis)
-│   │   │   └── orchestration.py           # Multi-source merging (RAG+MCP)
+│   │   │   ├── session_manager.py         # Session state (Postgres + Redis) State persistence
+│   │   │   └── orchestration.py           # Multi-source merging, LangChain orchestration (parallel flows)
 │   │   │
 │   │   ├── rag/                           # Retrieval Augmented Generation
 │   │   │   ├── retriever.py               # Top-k chunk retriever w/ threshold
@@ -37,6 +38,8 @@
 │   │   ├── image_classifier/              # Gemini Flash image classifier
 │   │   │   ├── model.py                   # Waste category classification
 │   │   │   └── utils.py                   # Preprocessing + inference helpers
+|   |   ├── websearch/                     #  async web search tools
+│   |   |    └── search.py
 │   │   │
 │   │   ├── db/                            # Database access layer
 │   │   │   ├── postgres.py                # Chat history + metadata
@@ -89,3 +92,4 @@
         └── grafana_dashboards.json
 
 ```
+
