@@ -5,55 +5,16 @@ import uuid
 import io
 import asyncio
 from PIL import Image
-
+import yaml
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
 from ChatbotService.chatmessage import ChatMessage
 from ChatbotService.chatbot_config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
 from langchain_exa import ExaSearchRetriever
+from .sessionmanger import SessionManager
 
 
-class SessionManager:
-    """Handles session file storage & retrieval."""
-
-    SESSIONS_DIR = "sessions"
-
-    def __init__(self, session_id: str):
-        os.makedirs(self.SESSIONS_DIR, exist_ok=True)
-        self.history_file = os.path.join(self.SESSIONS_DIR, f"session_{session_id}.json")
-    def load(self):
-        if os.path.exists(self.history_file):
-            with open(self.history_file, "r", encoding="utf-8") as f:
-                return json.load(f).get("messages", [])
-        return []
-
-    def save(self, messages):
-        with open(self.history_file, "w", encoding="utf-8") as f:
-            json.dump({"messages": [m.to_dict() for m in messages]}, f, indent=2)
-
-
-class ImageProcessor:
-    """Utility to process and encode images."""
-
-    @staticmethod
-    def prepare(image, max_size=(256, 256)):
-        if isinstance(image, str) and os.path.isfile(image):
-            try:
-                with Image.open(image) as img:
-                    img.thumbnail(max_size)
-                    buffer = io.BytesIO()
-                    img.save(buffer, format=img.format or "JPEG")
-                    encoded = base64.b64encode(buffer.getvalue()).decode()
-                return {"data": encoded}
-            except Exception as e:
-                print(f"Error processing {image}: {e}")
-                return None
-
-        if isinstance(image, dict) and "data" in image:
-            return {"data": image["data"].split(",", 1)[-1]}
-
-        return None
 
 
 class GeminiMultimodalChatbot:
@@ -86,14 +47,30 @@ class GeminiMultimodalChatbot:
         self.chat_messages = []
 
         # System prompt
-        self.system_prompt = (
-            "You are a helpful AI assistant powered by Google's Gemini model. "
-            "You can understand and respond to text, analyze images, and maintain context from our conversation history. "
-            "Be helpful, informative, and engaging. Keep responses concise but comprehensive."
-        )
+        self.system_prompt =  self._load_prompt()
 
         # Load past history
         self._rehydrate_history()
+    def _load_prompt(self):
+        with open("ChatbotandImageClassifier/ChatbotService/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        return data.get("system_prompt", "")
+    
+    def _prepare(self, image, max_size=(256, 256)):
+        '''Encodes image to base64'''
+        try:
+            with Image.open(image) as img:
+                img.thumbnail(max_size)
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG")
+                buffer.seek(0)
+                encoded = base64.b64encode(buffer.getvalue()).decode()
+            return {"data": encoded}
+        except Exception as e:
+            print(f"Error processing {image}: {e}")
+            return None
+
+
 
     def _rehydrate_history(self):
         for msg in self.session_mgr.load():
@@ -122,14 +99,12 @@ class GeminiMultimodalChatbot:
         return HumanMessage(content=content)
 
 
-    def get_response(self, user_input: str, images=None):
-        return asyncio.run(self.get_response_async(user_input, images))
 
 
-    async def _maybe_retrieve(self, query: str):
+    async def _maybe_retrieve(self, query: str, max_results: int = 5):
         """
         Runs web search with Exa if relevant.
-        Returns both formatted context for Gemini and structured references.
+        Returns both formatted context (snippets) and structured references with links.
         """
         try:
             docs = self.retriever.invoke(query)
@@ -139,33 +114,50 @@ class GeminiMultimodalChatbot:
 
             results = []
             references = []
-            for d in docs:
-                highlights = d.metadata.get("highlights", "")
-                url = d.metadata.get("url", "")
-                title = d.metadata.get("title", "Untitled")
 
-                snippet = f"- {d.page_content}\n  Highlights: {highlights}\n  Source: {url}"
+            for d in docs[:max_results]:
+                metadata = d.metadata or {}
+                title = metadata.get("title", "Untitled").strip()
+                url = metadata.get("url", "").strip()
+
+                # Handle highlights properly (can be str or list)
+                raw_highlights = metadata.get("highlights", "")
+                if isinstance(raw_highlights, list):
+                    highlights = " | ".join(h.strip() for h in raw_highlights if isinstance(h, str))
+                else:
+                    highlights = str(raw_highlights).strip()
+
+                # Markdown formatted reference
+                link = f"[{title}]({url})" if url else title
+
+                snippet = (
+                    f"- {d.page_content.strip()}\n"
+                    f"  Highlights: {highlights or 'N/A'}\n"
+                    f"  Source: {link}"
+                )
                 results.append(snippet)
 
                 references.append({
                     "title": title,
                     "url": url,
-                    "highlights": highlights
+                    "highlights": highlights,
+                    "content": d.page_content.strip()
                 })
 
             return {
                 "context": "\n".join(results),
                 "references": references
             }
+
         except Exception as e:
-            print(f"[Retriever error] {e}")
+            print(f"⚠️ Retrieval error: {e}")
             return None
 
 
     async def get_response_async(self, user_input: str, images=None):
         try:
             # Process images
-            processed_images = [ImageProcessor.prepare(img) for img in (images or []) if img]
+            processed_images = [self._prepare(img) for img in (images or []) if img]
             processed_images = [p for p in processed_images if p]
 
             # Retrieval (🔹 optional web search)
@@ -188,10 +180,18 @@ class GeminiMultimodalChatbot:
             # LLM response
             response = await asyncio.to_thread(self.llm.invoke, messages)
 
+            # Append references automatically
+            final_response = response.content
+            if references:
+                refs_formatted = "\n\n📎 References:\n" + "\n".join(
+                    [f"- [{r['title']}]({r['url']})" if r["url"] else f"- {r['title']}" for r in references]
+                )
+                final_response += refs_formatted
+
             # Update memory & history
-            self.memory.save_context({"input": user_input}, {"output": response.content})
+            self.memory.save_context({"input": user_input}, {"output": final_response})
             user_chat = ChatMessage("user", user_input, [i['data'] for i in processed_images])
-            ai_chat = ChatMessage("assistant", response.content)
+            ai_chat = ChatMessage("assistant", final_response)
             self.chat_messages.extend([user_chat, ai_chat])
 
             # Trim & save
@@ -200,7 +200,7 @@ class GeminiMultimodalChatbot:
 
             return {
                 "success": True,
-                "response": response.content,
+                "response": final_response,
                 "session_id": self.session_id,
                 "message_id": ai_chat.id,
                 "timestamp": ai_chat.timestamp,
@@ -210,3 +210,6 @@ class GeminiMultimodalChatbot:
             }
         except Exception as e:
             return {"success": False, "error": str(e), "session_id": self.session_id}
+
+    def get_response(self, user_input: str, images=None):
+        return asyncio.run(self.get_response_async(user_input, images))
