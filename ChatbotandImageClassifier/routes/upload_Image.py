@@ -9,8 +9,8 @@ from services.message_service import MessageService
 from services.images_classification_service import ImageClassificationService
 from dto.ImageDTO import ImageUploadResponseDTO
 from dto.MessageDTO import MessageResponseDTO
-# from utils.botutils import process_query
-# from core.initializers import chatbot, agent
+from utils.botutils import process_query
+from core.initializers import chatbot, agent
 
 router = APIRouter(tags=["Upload"])
 
@@ -77,7 +77,8 @@ async def upload_image_with_message(
                 "msg_id": ai_msg.msg_id,
                 "content": ai_msg.content,
                 "created_at": ai_msg.created_at
-            }
+            },
+            "reply": ai_msg.content
         }
 
     except Exception as e:
