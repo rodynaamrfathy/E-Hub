@@ -1,0 +1,193 @@
+metadata:
+  country: Egypt
+  version: 1.0.0
+  last_updated: '2025-08-19'
+  sources:
+    law_waste_management_2020: https://www.ecolex.org/details/legislation/waste-management-law-no202-of-2020-lex-faoc199134/
+    wmra_overview: https://knowledge-hub.circle-economy.com/article/7968
+    eeaa_nswmp: https://www.eeaa.gov.eg/Uploads/Project/Files/20221119135000806.pdf
+    e_tadweer: https://www.etadweer.com/en/
+    recyclobekia: https://recyclobekia.com/
+    verynile: https://verynile.org/
+    worldbank_medical_hazardous: https://documents1.worldbank.org/curated/en/267551623758347875/pdf/Addendum-to-Environmental-and-Social-Management-Framework.pdf
+  legal_basis:
+  - Waste Management Law No. 202 of 2020 establishes the Waste Management Regulatory
+    Authority (WMRA) and requires licensing for collection, sorting, transport, treatment,
+    recycling, and disposal activities.
+  - Open burning is prohibited; sorting at source is encouraged under national strategy
+    (WMRA/EEAA).
+  - EPR (extended producer responsibility) introduced for certain streams including
+    WEEE (e-waste).
+  notes:
+  - Local governorates may operate differently; always follow municipal instructions
+    when provided.
+  - Informal sector (Zabbaleen) is significant in Cairo—coordination with licensed
+    entities is recommended.
+egypt:
+  general_rules:
+    rinse_and_dry: Empty, rinse, and air-dry containers before recycling.
+    no_bags_in_recycling: Place recyclables loose, not in plastic bags.
+    flatten: Flatten cardboard to save space.
+    contamination_threshold: If heavily soiled with food/oil, place in general waste.
+    labels_caps: Labels can stay; caps back on bottles after rinsing to avoid loss
+      during collection.
+  plastic:
+    PET_1:
+      examples:
+      - Water/soft drink bottles
+      - Cooking oil bottles
+      do:
+      - Rinse and keep caps on
+      - Drop at PET bins, WMRA-licensed centers, or NGO drives (e.g., VeryNile)
+      dont:
+      - Do not crush beyond recognition if deposit/return is applicable
+      - Do not mix with organic waste
+      dropoff:
+      - Municipal PET bins (where available)
+      - Licensed recyclers
+      - NGO campaigns
+      policy_reference:
+      - Law 202/2020 (recycling & sorting)
+      - VeryNile plastic collection
+    HDPE_2:
+      examples:
+      - Milk bottle
+      - Detergent bottles
+      do:
+      - Rinse and recycle where accepted
+      - Check local acceptance for colored HDPE
+      dont:
+      - No liquids or residues
+    PP_5:
+      examples:
+      - Yogurt cups
+      - Bottle caps
+      - Takeaway containers
+      do:
+      - Rinse; recycle if accepted by local facility
+      dont:
+      - No food residue
+    LDPE_4_and_film:
+      examples:
+      - Plastic bags
+      - Shrink wrap
+      do:
+      - Reuse bags or take to designated film/plastic collection if available
+      dont:
+      - Do not place film in mixed recycling if not accepted
+      note: Some governorates restrict single-use plastic; prioritize reusable options.
+    PVC_3_PS_6_others_7:
+      examples:
+      - Blister packs (PVC)
+      - Foam packaging (PS)
+      route: Generally not accepted curbside; place in general waste or specialized
+        take-back where available.
+  paper_cardboard:
+    clean_paper:
+      examples:
+      - Office paper
+      - Newspapers
+      - Magazines
+      do:
+      - Keep dry; stack or bag separately for paper buyers/collectors
+      dont:
+      - No wet/greasy paper
+    cardboard:
+      do:
+      - Flatten
+      - Remove plastic liners where possible
+      dropoff:
+      - Paper buyers
+      - Municipal centers
+    soiled_paper:
+      route: Compost with organics if clean food residue only; otherwise general waste.
+  glass:
+    bottles_and_jars:
+      do:
+      - Rinse; remove lids (metal lids to metal)
+      dont:
+      - No ceramics or pyrex
+      note: Glass recycling availability varies by city; check local WMRA-licensed
+        facilities.
+    broken_glass:
+      route: Wrap securely (e.g., in cardboard) and place in general waste to protect
+        workers.
+  metal:
+    aluminum_cans:
+      do:
+      - Rinse; compact lightly
+      dropoff:
+      - Scrap dealers
+      - Municipal bins
+    steel_tins:
+      do:
+      - Rinse
+      - Remove labels optional
+    scrap_metal:
+      route: Sell/deliver to licensed scrap yards; large items by appointment.
+  organic:
+    food_waste:
+      preferred: Home composting/vermicompost where feasible.
+      secondary: Municipal organic collection if available.
+      dont:
+      - Do not pour oils into drains—collect and deliver to oil recovery points where
+        available.
+    garden_waste:
+      do:
+      - Compost or bundle for green waste collection (where available).
+  e_waste:
+    small_it_phones:
+      route: Use the national e-Tadweer app to find drop-off partners and receive
+        incentives; or deliver to licensed recyclers like RecycloBekia (B2B/bulk).
+      important:
+      - Wipe data; remove SIM and memory cards.
+      policy_reference:
+      - WMRA licensing; EPR for WEEE; e-Tadweer
+    batteries_small:
+      route: Store in a sealed container; take to hazardous/e-waste collection points
+        (avoid household bins).
+    large_appliances:
+      route: Request pick-up via e-Tadweer partners or licensed collectors; do not
+        place on street.
+    lamps:
+      route: Fluorescent/CFL to hazardous/e-waste collection (contains mercury).
+  hazardous:
+    household_chemicals_paint:
+      route: Take to hazardous waste collection days or licensed facilities; do not
+        pour into drains.
+      reference: EEAA and World Bank guidance on hazardous waste handling.
+    medical_pharmaceuticals:
+      route: Return expired/unused medicines to pharmacies or hospitals where take-back
+        exists; otherwise follow local health authority guidance.
+    industrial_hazardous:
+      note: Businesses must contract WMRA-licensed operators; Nasreya (Borg El Arab)
+        is cited as a licensed industrial hazardous disposal site in national documents.
+  textiles:
+    reusable_clothing:
+      route: Donate via charities/NGOs; launder before donation.
+    non_reusable:
+      route: Recycle through fabric buyers if available or place in general waste.
+  construction_and_demolition:
+    inert_rubble:
+      route: Arrange transport to designated C&D sites; illegal dumping is prohibited.
+      policy_reference: WMRA/EEAA guidance; local permits may be required.
+    wood_doors_fixtures:
+      route: Prioritize reuse/salvage; otherwise deliver to licensed facilities.
+    gypsum:
+      route: Keep dry and separate; specialized handling where available.
+  special_streams:
+    used_cooking_oil:
+      route: Collect in sealed containers; deliver to oil recyclers (biodiesel) where
+        available; never pour into drains.
+    printer_cartridges:
+      route: Return to vendor take-back or e-waste collectors.
+    tires:
+      route: Return to tire shops for proper handling; avoid illegal burning.
+  routing_logic:
+    priority_order:
+    - Reuse/Donation
+    - Take-back/EPR (e.g., e-Tadweer for WEEE)
+    - Recycling at WMRA-licensed centers/NGO drives
+    - Composting (organics)
+    - Energy recovery (where applicable)
+    - Safe disposal (landfill)
