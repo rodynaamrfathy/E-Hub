@@ -9,10 +9,10 @@ import yaml
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
-from ChatbotService.chatmessage import ChatMessage
-from ChatbotService.chatbot_config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
+from ..utils.chatmessage import ChatMessage
+from ..config.chatbot_config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
 from langchain_exa import ExaSearchRetriever
-from .sessionmanger import SessionManager
+from .session_manager import SessionManager
 
 
 
@@ -52,7 +52,7 @@ class GeminiMultimodalChatbot:
         # Load past history
         self._rehydrate_history()
     def _load_prompt(self):
-        with open("ChatbotandImageClassifier/ChatbotService/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
+        with open("ChatbotandImageClassifier/ChatbotService/config/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return data.get("system_prompt", "")
     

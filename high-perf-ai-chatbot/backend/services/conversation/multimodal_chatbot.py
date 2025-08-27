@@ -10,10 +10,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
 from ..utils.chatmessage import ChatMessage
-from ...config import MAX_HISTORY,CHATBOT_MODEL
+from ....config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
 from langchain_exa import ExaSearchRetriever
 from .session_manager import SessionManager
-from ..models.gemini_model import get_gemini
+
+
 
 
 class GeminiMultimodalChatbot:
@@ -26,7 +27,11 @@ class GeminiMultimodalChatbot:
         self.exa_api= "25a0ccbd-511a-4f89-a134-8fd3dcc4dc68"
 
         # LLM
-        self.llm = get_gemini()
+        self.llm = ChatGoogleGenerativeAI(
+            model=self.model_name,
+            google_api_key=API_KEY,
+            temperature=0.1
+        )
 
         # Memory
         self.memory = ConversationBufferWindowMemory(
@@ -42,15 +47,17 @@ class GeminiMultimodalChatbot:
         self.chat_messages = []
 
         # System prompt
-        self.system_prompt =  self._load_prompt()
+        self.system_prompt = self._load_prompt()
+
 
         # Load past history
         self._rehydrate_history()
+
     def _load_prompt(self):
         with open("high-perf-ai-chatbot/backend/services/utils/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return data.get("system_prompt", "")
-    
+        
     def _prepare(self, image, max_size=(256, 256)):
         '''Encodes image to base64'''
         try:

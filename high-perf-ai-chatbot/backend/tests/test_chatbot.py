@@ -91,8 +91,5 @@ def batch_test_mode():
 
 
 if __name__ == "__main__":
-    mode = input("Choose mode (1=interactive, 2=batch test): ").strip()
-    if mode == "1":
-        interactive_mode()
-    else:
-        batch_test_mode()
+
+    interactive_mode()
