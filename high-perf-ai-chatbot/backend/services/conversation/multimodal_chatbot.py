@@ -9,12 +9,12 @@ import yaml
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
-from ..utils.chatmessage import ChatMessage
-from ....config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
+from services.utils.chatmessage import ChatMessage
+from config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
 from langchain_exa import ExaSearchRetriever
-from .session_manager import SessionManager
-from ..models.gemini_model import get_gemini
-from ..utils.kb_handler import KB_handler
+from services.conversation.session_manager import SessionManager
+from services.models.gemini_model import get_gemini
+from services.utils.kb_handler import KB_handler
 from rapidfuzz import fuzz
 
 
