@@ -13,6 +13,7 @@ from ..utils.chatmessage import ChatMessage
 from ....config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
 from langchain_exa import ExaSearchRetriever
 from .session_manager import SessionManager
+from ..models.gemini_model import get_gemini
 
 
 
@@ -27,11 +28,7 @@ class GeminiMultimodalChatbot:
         self.exa_api= "25a0ccbd-511a-4f89-a134-8fd3dcc4dc68"
 
         # LLM
-        self.llm = ChatGoogleGenerativeAI(
-            model=self.model_name,
-            google_api_key=API_KEY,
-            temperature=0.1
-        )
+        self.llm = get_gemini()
 
         # Memory
         self.memory = ConversationBufferWindowMemory(
