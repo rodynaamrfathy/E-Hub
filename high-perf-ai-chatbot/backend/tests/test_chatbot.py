@@ -3,11 +3,29 @@ import os
 import re
 
 def extract_image_paths(text):
-    """Extract valid image paths from user input"""
-    potential_paths = re.findall(
-        r'[\w./\\-]+\.(?:png|jpg|jpeg|gif|webp)', text, flags=re.IGNORECASE
-    )
-    return [p for p in potential_paths if os.path.isfile(p)]
+    """Extract valid image paths from user input, removing quotes and apostrophes"""
+    # Look for common path patterns with image extensions
+    patterns = [
+        r"['\"]([^'\"]*\.(?:png|jpg|jpeg|gif|webp))['\"]",  # Quoted paths
+        r"(/[^\s]*\.(?:png|jpg|jpeg|gif|webp))",           # Unix absolute paths
+        r"([A-Za-z]:[^\s]*\.(?:png|jpg|jpeg|gif|webp))",   # Windows paths
+        r"([\w./\\-]+\.(?:png|jpg|jpeg|gif|webp))"         # General paths
+    ]
+    
+    found_paths = []
+    for pattern in patterns:
+        matches = re.findall(pattern, text, flags=re.IGNORECASE)
+        found_paths.extend(matches)
+    
+    # Clean and validate paths
+    valid_paths = []
+    for path in found_paths:
+        cleaned_path = path.strip("'\"")
+        if os.path.isfile(cleaned_path):
+            valid_paths.append(cleaned_path)
+            print(f"📁 Found valid image: {cleaned_path}")
+    
+    return valid_paths
 
 def interactive_mode():
     """Run chatbot interactively from terminal"""
@@ -17,6 +35,7 @@ def interactive_mode():
     chatbot = GeminiMultimodalChatbot()
     print(f"✅ Chatbot initialized with session ID: {chatbot.session_id}")
     
+    
     while True:
         try:
             user_input = input("\n🧑 You: ").strip()
@@ -24,19 +43,35 @@ def interactive_mode():
             if user_input.lower() in ['quit', 'exit', 'bye']:
                 print("👋 Goodbye!")
                 break
+                
             if not user_input:
                 continue
 
-            # Detect image paths in input
+            # Extract image paths from input
             images = extract_image_paths(user_input)
+            
+            # Remove the file paths from the text to avoid confusion
+            clean_text = user_input
+            for img_path in images:
+                clean_text = clean_text.replace(f"'{img_path}'", "").replace(f'"{img_path}"', "").replace(img_path, "")
+            clean_text = clean_text.strip()
+            
+            # If no meaningful text remains after removing paths, use a default question
+            if not clean_text or len(clean_text.split()) < 2:
+                if images:
+                    clean_text = "Can you help me identify this waste item and tell me how to recycle it in Egypt?"
+                else:
+                    clean_text = user_input  # Keep original if no images found
 
             print("🤖 Assistant: ", end="", flush=True)
-            result = chatbot.get_response(user_input, images if images else None)
+            
+            # Pass cleaned text and images to chatbot
+            result = chatbot.get_response(clean_text, images if images else None)
             
             if result["success"]:
                 print(result["response"])
                 if result.get("web_search_used"):
-                    print("🔎 (Web search results were included)")
+                    print("\n🔎 (Web search results were included)")
             else:
                 print(f"❌ Error: {result['error']}")
                 
@@ -47,49 +82,7 @@ def interactive_mode():
             print(f"\n❌ Error: {e}")
 
 
-def batch_test_mode():
-    """Run chatbot on all test images inside a folder"""
-    print("Gemini Multimodal Chatbot (Batch Test Mode)")
-    print("=" * 50)
-
-    chatbot = GeminiMultimodalChatbot()
-    print(f"✅ Chatbot ready (Session ID: {chatbot.session_id})")
-
-    # Folder containing test images
-    folder = "agents/waste_mangment_agent/tools/waste_classification/testing_photos"
-    
-    if not os.path.exists(folder):
-        print(f"❌ Test folder not found: {folder}")
-        return
-
-    image_files = [
-        os.path.join(folder, f) for f in os.listdir(folder)
-        if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-    ]
-
-    if not image_files:
-        print("⚠️ No images found in test folder.")
-        return
-
-    for img in image_files:
-        print(f"\n🖼️ Testing {img}...")
-        
-        text = (
-            "Classify this waste item in the image. "
-            "Explain how it can be recycled or reused, "
-            "and mention relevant recycling initiatives or organizations in Egypt."
-        )
-        
-        response = chatbot.get_response(text, [img])
-        
-        if response["success"]:
-            print("🤖", response["response"])
-            if response.get("web_search_used"):
-                print("🔎 (Web search results were included)")
-        else:
-            print(f"❌ Error: {response['error']}")
-
-
 if __name__ == "__main__":
+
 
     interactive_mode()
