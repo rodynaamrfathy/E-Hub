@@ -14,8 +14,8 @@ from ....config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
 from langchain_exa import ExaSearchRetriever
 from .session_manager import SessionManager
 from ..models.gemini_model import get_gemini
-
-
+from ..utils.kb_handler import KB_handler
+from rapidfuzz import fuzz
 
 
 class GeminiMultimodalChatbot:
@@ -49,11 +49,14 @@ class GeminiMultimodalChatbot:
 
         # Load past history
         self._rehydrate_history()
+        #Load KB
+        self.kb = KB_handler._load_kb()
 
     def _load_prompt(self):
         with open("high-perf-ai-chatbot/backend/services/utils/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return data.get("system_prompt", "")
+    
         
     def _prepare(self, image, max_size=(256, 256)):
         '''Encodes image to base64'''
@@ -81,6 +84,7 @@ class GeminiMultimodalChatbot:
             elif chat_msg.role == "assistant":
                 self.memory.chat_memory.add_ai_message(chat_msg.content)
 
+
     def _create_multimodal_message(self, text, images, default_mime="image/jpeg"):
         if not images:
             return HumanMessage(content=text)
@@ -100,48 +104,58 @@ class GeminiMultimodalChatbot:
 
 
 
-    async def _maybe_retrieve(self, query: str, max_results: int = 5):
-        """
-        Runs web search with Exa if relevant.
-        Returns both formatted context (snippets) and structured references with links.
-        """
+    async def _maybe_retrieve(self, query: str, max_results: int = 5, similarity_threshold: int = 70):
         try:
-            docs = self.retriever.invoke(query)
+            # 1) KB search first
+            kb_results = KB_handler._search_kb(query, max_results=max_results, threshold=65)
 
-            if not docs:
+            results, references = [], []
+
+            if kb_results:
+                results.append(kb_results)
+
+            # 2) If KB empty → fallback to Exa search
+            if not kb_results:
+                docs = self.retriever.invoke(query)
+
+                scored_docs = []
+                for d in docs:
+                    if not d.page_content:
+                        continue
+
+                    # fuzzy partial match (query vs doc content)
+                    score = fuzz.partial_ratio(query.lower(), d.page_content.lower())
+
+                    if score >= similarity_threshold:
+                        scored_docs.append((d, score))
+
+                # sort by fuzzy score
+                scored_docs = sorted(scored_docs, key=lambda x: x[1], reverse=True)[:max_results]
+
+                for d, score in scored_docs:
+                    metadata = d.metadata or {}
+                    title = metadata.get("title", "Untitled").strip()
+                    url = metadata.get("url", "").strip()
+                    highlights = metadata.get("highlights", "N/A")
+
+                    link = f"[{title}]({url})" if url else title
+                    snippet = (
+                        f"- {d.page_content.strip()}\n"
+                        f"  Highlights: {highlights}\n"
+                        f"  Fuzzy similarity: {score}\n"
+                        f"  Source: {link}"
+                    )
+                    results.append(snippet)
+                    references.append({
+                        "title": title,
+                        "url": url,
+                        "highlights": highlights,
+                        "content": d.page_content.strip(),
+                        "similarity": score
+                    })
+
+            if not results:
                 return None
-
-            results = []
-            references = []
-
-            for d in docs[:max_results]:
-                metadata = d.metadata or {}
-                title = metadata.get("title", "Untitled").strip()
-                url = metadata.get("url", "").strip()
-
-                # Handle highlights properly (can be str or list)
-                raw_highlights = metadata.get("highlights", "")
-                if isinstance(raw_highlights, list):
-                    highlights = " | ".join(h.strip() for h in raw_highlights if isinstance(h, str))
-                else:
-                    highlights = str(raw_highlights).strip()
-
-                # Markdown formatted reference
-                link = f"[{title}]({url})" if url else title
-
-                snippet = (
-                    f"- {d.page_content.strip()}\n"
-                    f"  Highlights: {highlights or 'N/A'}\n"
-                    f"  Source: {link}"
-                )
-                results.append(snippet)
-
-                references.append({
-                    "title": title,
-                    "url": url,
-                    "highlights": highlights,
-                    "content": d.page_content.strip()
-                })
 
             return {
                 "context": "\n".join(results),
@@ -151,6 +165,7 @@ class GeminiMultimodalChatbot:
         except Exception as e:
             print(f"⚠️ Retrieval error: {e}")
             return None
+
 
 
     async def get_response_async(self, user_input: str, images=None):
@@ -176,17 +191,14 @@ class GeminiMultimodalChatbot:
 
             messages.append(user_message)
 
-            # LLM response
             response = await asyncio.to_thread(self.llm.invoke, messages)
 
-            # Append references automatically
             final_response = response.content
-            if references:
+            if references:  # only if Exa used
                 refs_formatted = "\n\n📎 References:\n" + "\n".join(
                     [f"- [{r['title']}]({r['url']})" if r["url"] else f"- {r['title']}" for r in references]
                 )
                 final_response += refs_formatted
-
             # Update memory & history
             self.memory.save_context({"input": user_input}, {"output": final_response})
             user_chat = ChatMessage("user", user_input, [i['data'] for i in processed_images])
