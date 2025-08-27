@@ -61,7 +61,7 @@ def interactive_mode():
                 if images:
                     clean_text = "Can you help me identify this waste item and tell me how to recycle it in Egypt?"
                 else:
-                    clean_text = user_input  # Keep original if no images found
+                    clean_text = user_input  
 
             print("🤖 Assistant: ", end="", flush=True)
             
@@ -70,8 +70,7 @@ def interactive_mode():
             
             if result["success"]:
                 print(result["response"])
-                if result.get("web_search_used"):
-                    print("\n🔎 (Web search results were included)")
+
             else:
                 print(f"❌ Error: {result['error']}")
                 
