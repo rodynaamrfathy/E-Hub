@@ -54,21 +54,43 @@
 
 
 from fastapi import WebSocket
-from langchain_google_genai import ChatGoogleGenerativeAI
-import os
-from dotenv import load_dotenv
 from services.conversation.multimodal_chatbot import GeminiMultimodalChatbot
+import asyncio
+import json
 
-
-
-async def stream_gemini_to_websocket(websocket: WebSocket, query: str):
+async def stream_gemini_to_websocket(websocket: WebSocket, payload: str):
     chatbot = GeminiMultimodalChatbot()
+
+    # Default values
+    text = payload
+    images = None
+
+    # Try to parse JSON payload: {"text": str, "images": [{"data": str, "mime_type": str}]}
     try:
-        result = await chatbot.get_response_async(query)
+        data = json.loads(payload)
+        if isinstance(data, dict):
+            text = data.get("text", "")
+            images = data.get("images")
+    except Exception:
+        # Not JSON; treat as plain text
+        pass
+
+    try:
+        # Start getting the response asynchronously
+        response_task = asyncio.create_task(chatbot.get_response_async(text, images))
+
+        # Optional: you can yield partial responses here if your chatbot supports streaming
+        while not response_task.done():
+            await asyncio.sleep(0.1)  # small delay
+            # You could send partial text here if available
+
+        # Once complete, send the full response
+        result = await response_task
         if result.get("success"):
             await websocket.send_text(result.get("response", ""))
         else:
             await websocket.send_text(f"⚠️ Error: {result.get('error')}")
+
     except Exception as e:
         print(f"[ERROR] {e}")
         await websocket.send_text("⚠️ Unexpected error while processing your request.")

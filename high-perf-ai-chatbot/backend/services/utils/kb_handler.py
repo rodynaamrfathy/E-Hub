@@ -8,7 +8,7 @@ class KB_handler:
     @classmethod
     def _load_kb(cls):
         """Load Dawar KB from kb.yaml into memory."""
-        kb_path = "high-perf-ai-chatbot/backend/services/utils/KB.yaml"
+        kb_path = "/Users/rodynaamr/E-Hub/high-perf-ai-chatbot/backend/services/utils/KB.yaml"
         if not os.path.exists(kb_path):
             print("⚠️ No KB file found")
             cls.kb = []

@@ -43,31 +43,49 @@ class GeminiMultimodalChatbot:
         self.session_mgr = SessionManager(self.session_id)
         self.chat_messages = []
 
-        # System prompt
-        self.system_prompt = self._load_prompt()
 
 
         # Load past history
         self._rehydrate_history()
         #Load KB
         self.kb = KB_handler._load_kb()
+        self.system_prompt = self._load_prompt()
+        self.system_message = SystemMessage(content=self.system_prompt)
 
     def _load_prompt(self):
-        with open("high-perf-ai-chatbot/backend/services/utils/chatbot_prompt.yaml", "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-        return data.get("system_prompt", "")
-    
+        # Folder where this file resides
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Path to the YAML file
+        prompt_path = os.path.join(current_dir, "../utils/chatbot_prompt.yaml")
+        prompt_path = os.path.abspath(prompt_path)  # normalize
+
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)  # data is a dict
+        return data.get("system_prompt", "")  # return the string only
+            
         
     def _prepare(self, image, max_size=(256, 256)):
-        '''Encodes image to base64'''
+        '''Prepares image input into a dict with base64 data and optional mime_type.
+
+        Accepts:
+        - dict: {"data": <base64>, "mime_type": <str>?} (returned as-is)
+        - path/bytes/file-like: opens with PIL, resizes, encodes to base64
+        '''
         try:
+            # If already provided as base64 dict from client, pass through
+            if isinstance(image, dict) and image.get("data"):
+                data = image.get("data")
+                mime = image.get("mime_type")
+                return {"data": data, **({"mime_type": mime} if mime else {})}
+
+            # Otherwise, treat as file path or file-like
             with Image.open(image) as img:
                 img.thumbnail(max_size)
                 buffer = io.BytesIO()
                 img.save(buffer, format="PNG")
                 buffer.seek(0)
                 encoded = base64.b64encode(buffer.getvalue()).decode()
-            return {"data": encoded}
+            return {"data": encoded, "mime_type": "image/png"}
         except Exception as e:
             print(f"Error processing {image}: {e}")
             return None
