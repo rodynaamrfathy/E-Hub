@@ -1,98 +1,80 @@
 import os
-import json
-import base64
 import uuid
-import io
 import asyncio
-from PIL import Image
-import yaml
+from typing import List, Dict, Optional, Any, Union
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
-from services.utils.chatmessage import ChatMessage
-from config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, EXA_API_KEY
-from langchain_exa import ExaSearchRetriever
+from services.utils.chatmessage import ChatMessage  
+from config import API_KEY, CHATBOT_MODEL, MAX_HISTORY
 from services.conversation.session_manager import SessionManager
-from services.models.gemini_model import get_gemini
-from services.utils.kb_handler import KB_handler
-from rapidfuzz import fuzz
+from services.conversation.KnowledgeRetriever import KnowledgeRetriever
+from services.conversation.PromptLoader import PromptLoader
+from services.conversation.MessageBuilder import MessageBuilder
+from services.conversation.ImageProcessor import ImageProcessor
+from services.models.response_types import ChatResponse
 
 
 class GeminiMultimodalChatbot:
-    """Multimodal chatbot with history awareness."""
+    """
+    Multimodal chatbot with history awareness, knowledge retrieval, and web search.
+    
+    Features:
+    - Conversation history management
+    - Image processing and multimodal input
+    - Knowledge base search with web search fallback
+    - Session persistence
+    """
 
-    def __init__(self, session_id=None):
+    def __init__(self, session_id: Optional[str] = None):
         self.session_id = session_id or str(uuid.uuid4())
         self.model_name = CHATBOT_MODEL
         self.max_history = MAX_HISTORY
-        self.exa_api= "25a0ccbd-511a-4f89-a134-8fd3dcc4dc68"
 
-        # LLM
-        self.llm = get_gemini()
+        # Initialize components
+        self._init_llm()
+        self._init_memory()
+        self._init_retriever()
+        self._init_session()
+        self._load_system_prompt()
+        
+        # Load conversation history
+        self._rehydrate_history()
 
-        # Memory
-        self.memory = ConversationBufferWindowMemory(
-            k=self.max_history, return_messages=True, memory_key="chat_history"
+    def _init_llm(self):
+        """Initialize Gemini without streaming."""
+        self.llm = ChatGoogleGenerativeAI(
+            model=self.model_name,
+            google_api_key=API_KEY,
+            temperature=0.7,
         )
 
-        # Retriever
-        self.retriever = ExaSearchRetriever(exa_api_key=self.exa_api, k=5, highlights=True,
-                                            livecrawl='fallback')
+    def _init_memory(self):
+        """Initialize conversation memory."""
+        self.memory = ConversationBufferWindowMemory(
+            k=self.max_history, 
+            return_messages=True, 
+            memory_key="chat_history"
+        )
 
-        # Session + Messages
+    def _init_retriever(self):
+        """Initialize knowledge retriever."""
+        # Use environment variable or fallback
+        exa_api_key = os.getenv('EXA_API_KEY', "25a0ccbd-511a-4f89-a134-8fd3dcc4dc68")
+        self.retriever = KnowledgeRetriever(exa_api_key)
+
+    def _init_session(self):
+        """Initialize session management."""
         self.session_mgr = SessionManager(self.session_id)
         self.chat_messages = []
 
-
-
-        # Load past history
-        self._rehydrate_history()
-        #Load KB
-        self.kb = KB_handler._load_kb()
-        self.system_prompt = self._load_prompt()
+    def _load_system_prompt(self):
+        """Load system prompt and create system message."""
+        self.system_prompt = PromptLoader.load_system_prompt()
         self.system_message = SystemMessage(content=self.system_prompt)
 
-    def _load_prompt(self):
-        # Folder where this file resides
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # Path to the YAML file
-        prompt_path = os.path.join(current_dir, "../utils/chatbot_prompt.yaml")
-        prompt_path = os.path.abspath(prompt_path)  # normalize
-
-        with open(prompt_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)  # data is a dict
-        return data.get("system_prompt", "")  # return the string only
-            
-        
-    def _prepare(self, image, max_size=(256, 256)):
-        '''Prepares image input into a dict with base64 data and optional mime_type.
-
-        Accepts:
-        - dict: {"data": <base64>, "mime_type": <str>?} (returned as-is)
-        - path/bytes/file-like: opens with PIL, resizes, encodes to base64
-        '''
-        try:
-            # If already provided as base64 dict from client, pass through
-            if isinstance(image, dict) and image.get("data"):
-                data = image.get("data")
-                mime = image.get("mime_type")
-                return {"data": data, **({"mime_type": mime} if mime else {})}
-
-            # Otherwise, treat as file path or file-like
-            with Image.open(image) as img:
-                img.thumbnail(max_size)
-                buffer = io.BytesIO()
-                img.save(buffer, format="PNG")
-                buffer.seek(0)
-                encoded = base64.b64encode(buffer.getvalue()).decode()
-            return {"data": encoded, "mime_type": "image/png"}
-        except Exception as e:
-            print(f"Error processing {image}: {e}")
-            return None
-
-
-
     def _rehydrate_history(self):
+        """Load and restore conversation history from session."""
         for msg in self.session_mgr.load():
             chat_msg = ChatMessage.from_dict(msg)
             self.chat_messages.append(chat_msg)
@@ -102,143 +84,161 @@ class GeminiMultimodalChatbot:
             elif chat_msg.role == "assistant":
                 self.memory.chat_memory.add_ai_message(chat_msg.content)
 
+    def _build_message_chain(self, 
+                           user_message: HumanMessage, 
+                           retrieved_context: Optional[str]) -> List[Union[SystemMessage, HumanMessage, AIMessage]]:
+        """Build the complete message chain for the LLM."""
+        history = self.memory.chat_memory.messages
+        messages = [self.system_message, *history]
 
-    def _create_multimodal_message(self, text, images, default_mime="image/jpeg"):
-        if not images:
-            return HumanMessage(content=text)
+        if retrieved_context:
+            context_message = SystemMessage(
+                content=f"Here are relevant search results:\n{retrieved_context}"
+            )
+            messages.append(context_message)
 
-        content = []
-        if text:
-            content.append({"type": "text", "text": text})
+        messages.append(user_message)
+        return messages
 
-        for img in images:
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:{img.get('mime_type', default_mime)};base64,{img['data']}"}
-            })
+    def _format_response_with_references(self, 
+                                       response: str, 
+                                       references: List[Dict]) -> str:
+        """Format the final response with references if available."""
+        if not references:
+            return response
 
-        return HumanMessage(content=content)
+        refs_formatted = "\n\n📎 References:\n" + "\n".join([
+            f"- [{ref['title']}]({ref['url']})" if ref.get("url") 
+            else f"- {ref['title']}" 
+            for ref in references
+        ])
+        
+        return response + refs_formatted
 
+    def _update_conversation_state(self, 
+                                 user_input: str, 
+                                 final_response: str, 
+                                 processed_images: List[Dict[str, str]]):
+        """Update memory and chat messages with new conversation turn."""
+        # Update memory
+        self.memory.save_context(
+            {"input": user_input}, 
+            {"output": final_response}
+        )
 
+        # Create chat messages
+        user_chat = ChatMessage(
+            "user", 
+            user_input, 
+            [img['data'] for img in processed_images]
+        )
+        ai_chat = ChatMessage("assistant", final_response)
+        
+        # Add to chat history
+        self.chat_messages.extend([user_chat, ai_chat])
 
+        # Trim history and save
+        self.chat_messages = self.chat_messages[-self.max_history * 2:]
+        self.session_mgr.save(self.chat_messages)
+        
+        return ai_chat
 
-    async def _maybe_retrieve(self, query: str, max_results: int = 5, similarity_threshold: int = 70):
-        try:
-            # 1) KB search first
-            kb_results = KB_handler._search_kb(query, max_results=max_results, threshold=65)
-
-            results, references = [], []
-
-            if kb_results:
-                results.append(kb_results)
-
-            # 2) If KB empty → fallback to Exa search
-            if not kb_results:
-                docs = self.retriever.invoke(query)
-
-                scored_docs = []
-                for d in docs:
-                    if not d.page_content:
-                        continue
-
-                    # fuzzy partial match (query vs doc content)
-                    score = fuzz.partial_ratio(query.lower(), d.page_content.lower())
-
-                    if score >= similarity_threshold:
-                        scored_docs.append((d, score))
-
-                # sort by fuzzy score
-                scored_docs = sorted(scored_docs, key=lambda x: x[1], reverse=True)[:max_results]
-
-                for d, score in scored_docs:
-                    metadata = d.metadata or {}
-                    title = metadata.get("title", "Untitled").strip()
-                    url = metadata.get("url", "").strip()
-                    highlights = metadata.get("highlights", "N/A")
-
-                    link = f"[{title}]({url})" if url else title
-                    snippet = (
-                        f"- {d.page_content.strip()}\n"
-                        f"  Highlights: {highlights}\n"
-                        f"  Fuzzy similarity: {score}\n"
-                        f"  Source: {link}"
-                    )
-                    results.append(snippet)
-                    references.append({
-                        "title": title,
-                        "url": url,
-                        "highlights": highlights,
-                        "content": d.page_content.strip(),
-                        "similarity": score
-                    })
-
-            if not results:
-                return None
-
-            return {
-                "context": "\n".join(results),
-                "references": references
-            }
-
-        except Exception as e:
-            print(f"⚠️ Retrieval error: {e}")
-            return None
-
-
-
-    async def get_response_async(self, user_input: str, images=None):
+    async def get_response_async(self, 
+                               user_input: str, 
+                               images: Optional[List] = None) -> Dict[str, Any]:
+        """
+        Get complete async response from the chatbot.
+        
+        Args:
+            user_input: User's text input
+            images: Optional list of images
+            
+        Returns:
+            ChatResponse as dictionary
+        """
         try:
             # Process images
-            processed_images = [self._prepare(img) for img in (images or []) if img]
-            processed_images = [p for p in processed_images if p]
+            processed_images = ImageProcessor.process_images(images)
 
-            # Retrieval (🔹 optional web search)
-            retrieved_data = await self._maybe_retrieve(user_input)
-            retrieved_context = retrieved_data["context"] if retrieved_data else None
-            references = retrieved_data["references"] if retrieved_data else []
+            # Retrieve relevant context
+            retrieval_result = await self.retriever.retrieve_context(user_input)
+            retrieved_context = retrieval_result.context if retrieval_result else None
+            references = retrieval_result.references if retrieval_result else []
 
-            # Create multimodal input
-            user_message = self._create_multimodal_message(user_input, processed_images)
+            # Create user message
+            user_message = MessageBuilder.create_multimodal_message(
+                user_input, processed_images
+            )
 
-            # Prepare messages
-            history = self.memory.chat_memory.messages
-            messages = [SystemMessage(content=self.system_prompt), *history]
+            # Build message chain
+            messages = self._build_message_chain(user_message, retrieved_context)
 
-            if retrieved_context:
-                messages.append(SystemMessage(content=f"Here are relevant web search results:\n{retrieved_context}"))
-
-            messages.append(user_message)
-
+            # Get LLM response
             response = await asyncio.to_thread(self.llm.invoke, messages)
 
-            final_response = response.content
-            if references:  # only if Exa used
-                refs_formatted = "\n\n📎 References:\n" + "\n".join(
-                    [f"- [{r['title']}]({r['url']})" if r["url"] else f"- {r['title']}" for r in references]
-                )
-                final_response += refs_formatted
-            # Update memory & history
-            self.memory.save_context({"input": user_input}, {"output": final_response})
-            user_chat = ChatMessage("user", user_input, [i['data'] for i in processed_images])
-            ai_chat = ChatMessage("assistant", final_response)
-            self.chat_messages.extend([user_chat, ai_chat])
+            # Format final response
+            final_response = self._format_response_with_references(
+                response.content, references
+            )
 
-            # Trim & save
-            self.chat_messages = self.chat_messages[-self.max_history * 2:]
-            self.session_mgr.save(self.chat_messages)
+            # Update conversation state
+            ai_chat = self._update_conversation_state(
+                user_input, final_response, processed_images
+            )
 
-            return {
-                "success": True,
-                "response": final_response,
-                "session_id": self.session_id,
-                "message_id": ai_chat.id,
-                "timestamp": ai_chat.timestamp,
-                "images_processed": len(processed_images),
-                "web_search_used": retrieved_context is not None,
-                "references": references  
-            }
+            return ChatResponse(
+                success=True,
+                response=final_response,
+                session_id=self.session_id,
+                message_id=ai_chat.id,
+                timestamp=ai_chat.timestamp,
+                images_processed=len(processed_images),
+                web_search_used=retrieved_context is not None,
+                references=references,
+                is_streaming=False
+            ).__dict__
+
         except Exception as e:
-            return {"success": False, "error": str(e), "session_id": self.session_id}
+            print(f"Error in get_response_async: {e}")
+            return ChatResponse(
+                success=False,
+                error=str(e),
+                session_id=self.session_id
+            ).__dict__
 
-    def get_response(self, user_input: str, images=None):
+    def get_response(self, user_input: str, images: Optional[List] = None) -> Dict[str, Any]:
+        """
+        Synchronous wrapper for get_response_async.
+        
+        Args:
+            user_input: User's text input
+            images: Optional list of images
+            
+        Returns:
+            ChatResponse as dictionary
+        """
         return asyncio.run(self.get_response_async(user_input, images))
+
+    # Utility methods for external access
+    def get_session_id(self) -> str:
+        """Get the current session ID."""
+        return self.session_id
+
+    def get_chat_history(self) -> List[ChatMessage]:
+        """Get the current chat history."""
+        return self.chat_messages.copy()
+
+    def clear_history(self):
+        """Clear conversation history."""
+        self.chat_messages.clear()
+        self.memory.clear()
+        self.session_mgr.save(self.chat_messages)
+
+    def get_memory_summary(self) -> Dict[str, Any]:
+        """Get summary of current memory state."""
+        return {
+            "total_messages": len(self.chat_messages),
+            "memory_messages": len(self.memory.chat_memory.messages),
+            "session_id": self.session_id,
+            "max_history": self.max_history
+        }
