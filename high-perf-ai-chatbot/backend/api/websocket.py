@@ -1,96 +1,56 @@
-
-# import os
-# from fastapi import WebSocket
-# from dotenv import load_dotenv
-
-# from mcp import ClientSession, StdioServerParameters
-# from mcp.client.stdio import stdio_client
-# from langchain_mcp_adapters.tools import load_mcp_tools
-# from langgraph.prebuilt import create_react_agent
-# from langchain_google_genai import ChatGoogleGenerativeAI
-# from langchain_core.messages import AIMessage
-
-
-# load_dotenv()
-# google_api_key = os.getenv("GOOGLE_API_KEY")
-
-# async def stream_gemini_to_websocket(websocket: WebSocket, query: str):
-#     server_params = StdioServerParameters(
-#         command="python",
-#         args=["-m", "services.mcp.server"],  # ✅ package import, not file path
-#     )
-
-#     try:
-#         # Start MCP client session
-#         async with stdio_client(server_params) as (read, write):
-#             async with ClientSession(read, write) as session:
-#                 await session.initialize()
-
-#                 # Load tools from MCP server
-#                 tools = await load_mcp_tools(session)
-
-#                 # Create Gemini LLM
-#                 llm = ChatGoogleGenerativeAI(
-#                     model="gemini-2.5-pro",
-#                     google_api_key=google_api_key,
-#                 )
-
-#                 # Create MCP-powered agent
-#                 agent = create_react_agent(llm, tools)
-
-#                 # Stream results back to WebSocket
-
-#                 async for chunk in agent.astream({"messages": query}):
-#                     if isinstance(chunk, AIMessage):
-#                         await websocket.send_text(chunk.content)
-#                     else:
-#                         # Optional: handle tool calls or other messages
-#                         pass
-
-
-#     except Exception as e:
-#         print(f"[ERROR] {e}")
-#         await websocket.send_text("⚠️ Error while processing your request.")
-
-
 from fastapi import WebSocket
 from services.conversation.multimodal_chatbot import GeminiMultimodalChatbot
-import asyncio
 import json
+from typing import List, Dict, Optional
 
 async def stream_gemini_to_websocket(websocket: WebSocket, payload: str):
+    """
+    Handles a chat message with optional images entirely in memory.
+    Expects payload JSON:
+    {
+        "text": "Hello",
+        "images": [
+            {"mime_type": "image/png", "image_base64": "..."},
+            ...
+        ]
+    }
+    """
     chatbot = GeminiMultimodalChatbot()
+    
+    # Defaults
+    text: str = payload
+    images: Optional[List[Dict[str, str]]] = None
 
-    # Default values
-    text = payload
-    images = None
-
-    # Try to parse JSON payload: {"text": str, "images": [{"data": str, "mime_type": str}]}
+    # Try to parse JSON payload
     try:
         data = json.loads(payload)
         if isinstance(data, dict):
             text = data.get("text", "")
-            images = data.get("images")
+            images = data.get("images")  # list of {"mime_type", "image_base64"}
     except Exception:
-        # Not JSON; treat as plain text
+        # Keep defaults if parsing fails
         pass
 
     try:
-        # Start getting the response asynchronously
-        response_task = asyncio.create_task(chatbot.get_response_async(text, images))
+        # Send text + images to chatbot asynchronously
+        result = await chatbot.get_response_async(text, images)
 
-        # Optional: you can yield partial responses here if your chatbot supports streaming
-        while not response_task.done():
-            await asyncio.sleep(0.1)  # small delay
-            # You could send partial text here if available
-
-        # Once complete, send the full response
-        result = await response_task
+        # Send response back to client
         if result.get("success"):
-            await websocket.send_text(result.get("response", ""))
+            await websocket.send_text(json.dumps(result))
         else:
-            await websocket.send_text(f"⚠️ Error: {result.get('error')}")
+            await websocket.send_text(json.dumps({
+                "success": False,
+                "error": result.get("error", "Unknown error")
+            }))
 
+        # Notify client that processing is done
+        await websocket.send_text("[DONE]")
+        
     except Exception as e:
-        print(f"[ERROR] {e}")
-        await websocket.send_text("⚠️ Unexpected error while processing your request.")
+        # Catch any unexpected errors
+        await websocket.send_text(json.dumps({
+            "success": False,
+            "error": f"Unexpected error: {str(e)}"
+        }))
+
