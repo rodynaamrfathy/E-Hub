@@ -5,6 +5,8 @@ import {
   getConversationHistory, sendMessageStream, uploadImageWithMessage
 } from '../../services/api'
 import type { ConversationListDTO, MessageHistoryDTO } from '../../types'
+import ReactMarkdown from "react-markdown"
+
 
 type LocalMsg = {
   id: string
@@ -232,10 +234,15 @@ export default function ChatApp() {
       <section className="bg-white rounded-2xl shadow-soft h-[70vh] md:h-[78vh] flex flex-col">
         {/* Messages */}
         <div className="flex-1 overflow-auto p-4 space-y-3">
-          {messages.map(m => (
+        {messages.map(m => (
             <div key={m.id} className={`flex ${m.role==='user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${m.role==='user' ? 'bg-brand text-white' : 'bg-gray-100 text-gray-800'}`}>
-                <div className="whitespace-pre-wrap text-sm">{m.content}</div>
+                
+                {/* ✅ Render markdown instead of raw text */}
+                <div className="prose prose-sm max-w-none text-sm">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
+
                 {!!m.attachments?.length && (
                   <div className="mt-2 flex gap-2 text-xs opacity-80">
                     {m.attachments.map((a, i) => (
@@ -250,6 +257,7 @@ export default function ChatApp() {
               </div>
             </div>
           ))}
+
           {loading && (
             <div className="flex justify-start">
               <div className="bg-gray-100 text-gray-800 px-3 py-2 rounded-2xl inline-flex items-center gap-2">
