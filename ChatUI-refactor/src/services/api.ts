@@ -120,15 +120,25 @@ export function sendMessageStream(convId: string, content: string, onToken: (tok
 }
 
 // Images
-export async function uploadImageWithMessage(convId: string, file: File, query?: string) {
+export async function uploadImageWithMessage(
+  convId: string,
+  file: File,
+  query: string = "What type of waste is this and how should I recycle it?"
+) {
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('conv_id', convId)      // required
+  formData.append('query', query)         // optional
+  formData.append('image_file', file)     // must match `image_file` in backend
 
-  const { data } = await axios.post(`${API_BASE}/api/upload/upload-image`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  const { data } = await axios.post(
+    `${API_BASE}/api/upload/upload-image`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
+
   return data
 }
+
 
 // Note: Image history endpoint doesn't exist in backend yet
 // export async function getImageHistory() {
