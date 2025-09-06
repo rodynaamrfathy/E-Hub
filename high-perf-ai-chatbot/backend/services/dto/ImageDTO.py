@@ -2,15 +2,11 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel
-from dto.ImageClassificationDTO import ImageClassificationDTO
-
-
 
 class ImageDTO(BaseModel):
     image_id: UUID
     mime_type: str
     image_base64: str
-    classification: Optional[ImageClassificationDTO] = None
 
 class ImageUploadResponseDTO(BaseModel):
     image_id: UUID

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Streaming</title>
+</head>
+<body>
+    <h1>Test Streaming</h1>
+    <button onclick="testStreaming()">Test Streaming</button>
+    <div id="output"></div>
+
+    <script>
+        async function testStreaming() {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Starting test...<br>';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/chat/148a017c-e8aa-426f-a1d1-879068c87c97/send-stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: 'Hello, test streaming' })
+                });
+                
+                console.log('Response:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body?.getReader();
+                if (!reader) {
+                    throw new Error('No response body');
+                }
+                
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                function readStream() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            output.innerHTML += '<br>Stream completed';
+                            return;
+                        }
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        console.log('Received chunk:', chunk);
+                        buffer += chunk;
+                        
+                        // Process complete lines
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+                        
+                        for (const line of lines) {
+                            if (line.trim() === '') continue;
+                            
+                            if (line.startsWith('data: ')) {
+                                const data = line.slice(6).trim();
+                                console.log('Processing data:', data);
+                                
+                                if (data === '[DONE]') {
+                                    output.innerHTML += '<br>Stream finished';
+                                    return;
+                                }
+                                
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    console.log('Parsed token:', parsed);
+                                    if (parsed.token) {
+                                        output.innerHTML += parsed.token;
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing SSE data:', e, 'Data:', data);
+                                }
+                            }
+                        }
+                        
+                        return readStream();
+                    });
+                }
+                
+                await readStream();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                output.innerHTML += '<br>Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

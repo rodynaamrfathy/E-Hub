@@ -4,9 +4,7 @@ import re
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from dotenv import load_dotenv
-
-load_dotenv()
+from config import DATABASE_URL
 
 def clean_asyncpg_url(db_url: str) -> str:
     """Convert to asyncpg URL and strip psycopg2-only params."""
@@ -30,7 +28,7 @@ class DatabaseManager:
         self.async_session_factory = None
         
     async def initialize(self):
-        database_url = os.getenv("DATABASE_URL")
+        database_url = DATABASE_URL
         if not database_url:
             raise ValueError("DATABASE_URL environment variable is not set")
         
@@ -53,7 +51,7 @@ class DatabaseManager:
 
     # goes through all ORM classes that inherit from Base
     async def create_tables(self):
-        from models import Base  
+        from services.models import Base  
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             

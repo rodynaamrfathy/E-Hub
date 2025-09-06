@@ -2,7 +2,7 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
-from dto.ImageDTO import ImageDTO
+from services.dto.ImageDTO import ImageDTO
 
 class MessageCreateDTO(BaseModel):
     content: str

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, Send, Image as ImageIcon, Trash2, History, Loader2, Paperclip } from 'lucide-react'
+import { Plus, Send, Image as ImageIcon, Trash2, Loader2, Paperclip } from 'lucide-react'
 import { 
   createConversation, listConversations, deleteConversationApi, 
-  getConversationHistory, sendMessageApi, uploadImageWithMessage, getImageHistory 
+  getConversationHistory, sendMessageStream, uploadImageWithMessage
 } from '../../services/api'
-import type { ConversationListDTO, MessageHistoryDTO, ImageHistoryDTO } from '../../types'
+import type { ConversationListDTO, MessageHistoryDTO } from '../../types'
 
 type LocalMsg = {
   id: string
@@ -22,11 +22,11 @@ export default function ChatApp() {
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [imgHistoryOpen, setImgHistoryOpen] = useState(false)
-  const [imageHistory, setImageHistory] = useState<ImageHistoryDTO[] | null>(null)
+  // Image history functionality removed as endpoint doesn't exist in backend
 
   const fileRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const currentStreamRef = useRef<{ abort: () => void } | null>(null)
 
   // Load conversations on mount
   useEffect(() => {
@@ -44,6 +44,15 @@ export default function ChatApp() {
         setCurrentConvId(conv.conv_id)
       }
     })()
+  }, [])
+
+  // Cleanup streaming on unmount
+  useEffect(() => {
+    return () => {
+      if (currentStreamRef.current) {
+        currentStreamRef.current.abort()
+      }
+    }
   }, [])
 
   // Load history whenever current conversation changes
@@ -93,6 +102,9 @@ export default function ChatApp() {
 
   async function onSend(){
     if (!input.trim() || !currentConvId) return
+    
+    console.log('onSend called with input:', input, 'convId:', currentConvId)
+    
     const userMsg: LocalMsg = {
       id: `local-${Date.now()}`,
       role: 'user',
@@ -100,24 +112,56 @@ export default function ChatApp() {
       timestamp: new Date().toISOString()
     }
     setMessages(prev => [...prev, userMsg])
+    const userInput = input
     setInput('')
     setLoading(true)
     scrollToBottom()
-    try {
-      const res = await sendMessageApi(currentConvId, userMsg.content)
-      const botMsg: LocalMsg = {
-        id: res.msg_id,
-        role: 'assistant',
-        content: res.content,
-        timestamp: res.created_at
-      }
-      setMessages(prev => [...prev, botMsg])
-    } catch (e) {
-      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: 'assistant', content: '❌ Failed to reach server.', timestamp: new Date().toISOString() }])
-    } finally {
-      setLoading(false)
-      scrollToBottom()
+
+    // Create a placeholder for the assistant's streaming response
+    const assistantMsgId = `assistant-${Date.now()}`
+    const assistantMsg: LocalMsg = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString()
     }
+    setMessages(prev => [...prev, assistantMsg])
+
+    // Use streaming API
+    console.log('Starting stream for conversation:', currentConvId, 'with input:', userInput)
+    currentStreamRef.current = sendMessageStream(
+      currentConvId,
+      userInput,
+      (token) => {
+        console.log('Received token:', token)
+        // Update the assistant message with new token
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMsgId 
+            ? { ...msg, content: msg.content + token }
+            : msg
+        ))
+        scrollToBottom()
+      },
+      () => {
+        console.log('Streaming completed')
+        // Streaming completed
+        setLoading(false)
+        currentStreamRef.current = null
+        scrollToBottom()
+      },
+      (error) => {
+        console.error('Streaming error:', error)
+        // Error occurred
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMsgId 
+            ? { ...msg, content: `❌ Error: ${error}` }
+            : msg
+        ))
+        setLoading(false)
+        currentStreamRef.current = null
+        scrollToBottom()
+      }
+    )
   }
 
   async function onUpload(files: FileList | null){
@@ -151,20 +195,7 @@ export default function ChatApp() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  async function toggleImageHistory(){
-    if (imgHistoryOpen){
-      setImgHistoryOpen(false)
-      return
-    }
-    try {
-      const data = await getImageHistory()
-      setImageHistory(data)
-    } catch {
-      setImageHistory([])
-    } finally {
-      setImgHistoryOpen(true)
-    }
-  }
+  // Image history functionality removed as endpoint doesn't exist in backend
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4">
@@ -194,24 +225,7 @@ export default function ChatApp() {
           {conversations.length===0 && <div className="text-sm text-gray-500">No conversations yet.</div>}
         </div>
 
-        <button onClick={toggleImageHistory} className="mt-3 inline-flex items-center gap-2 text-sm px-3 py-2 rounded-xl border hover:bg-gray-50">
-          <History className="w-4 h-4" />
-          Upload history
-        </button>
-
-        {imgHistoryOpen && (
-          <div className="mt-3 border rounded-xl p-2 h-40 overflow-auto">
-            {!imageHistory && <div className="text-sm text-gray-500">Loading...</div>}
-            {imageHistory && imageHistory.length===0 && <div className="text-sm text-gray-500">No uploads yet.</div>}
-            {imageHistory && imageHistory.map(item => (
-              <div key={item.image_id} className="text-sm py-1">
-                <div className="font-medium">{item.label}</div>
-                <div className="text-xs text-gray-500">{new Date(item.created_at).toLocaleString()}</div>
-                <div className="text-xs">{item.recycle_instructions}</div>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Image history functionality removed as endpoint doesn't exist in backend */}
       </aside>
 
       {/* Chat Panel */}

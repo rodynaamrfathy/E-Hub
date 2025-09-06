@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from models import Message, Image, ImageClassification
+from ..models import Message, Image, ImageClassification
 from typing import List
 from uuid import UUID
 

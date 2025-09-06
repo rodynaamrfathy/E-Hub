@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
-from models import Conversation
+from ..models import Conversation
+
 from uuid import UUID
 
 class ConversationService:
