@@ -245,39 +245,37 @@ class GeminiMultimodalChatbot:
 
     async def stream_response(self, user_input: str, images: Optional[List] = None):
         """
-        Stream response tokens as they are generated.
-        
-        Args:
-            user_input: User's text input
-            images: Optional list of images
-            
-        Yields:
-            str: Individual tokens as they are generated
+        Stream response tokens as they are generated and accumulate the final response.
         """
+        final_response = []
+
         try:
             # Process images if provided
             processed_images = []
             if images:
                 processed_images = await self.image_processor.process_images(images)
-            
-            # Build message chain
-            messages = self._build_message_chain(user_input, processed_images)
-            
+
+            # Build message chain (note: your current version mistakenly passes user_input directly)
+            user_message = MessageBuilder.create_multimodal_message(user_input, processed_images)
+            messages = self._build_message_chain(user_message, None)
+
             # Get streaming response from LLM
             async for chunk in self.llm.astream(messages):
                 if hasattr(chunk, 'content') and chunk.content:
-                    # Split content into tokens (simple word splitting for now)
                     tokens = chunk.content.split()
                     for token in tokens:
+                        final_response.append(token)
                         yield token + " "
-                        
+
         except Exception as e:
             print(f"Error in stream_response: {e}")
             yield f"Error: {str(e)}"
+        finally:
+            # Save the full response after streaming
+            self._last_full_response = " ".join(final_response).strip()
 
     def get_full_response(self) -> str:
         """
         Get the full response after streaming is complete.
-        This is a placeholder - in a real implementation, you'd capture the full response.
         """
-        return "Response completed"
+        return getattr(self, "_last_full_response", "")
