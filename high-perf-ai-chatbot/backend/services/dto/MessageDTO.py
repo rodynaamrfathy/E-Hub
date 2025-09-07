@@ -20,3 +20,6 @@ class MessageResponseDTO(BaseModel):
     sender: str
     content: str
     created_at: datetime
+
+class MessageCreateWithImagesDTO(BaseModel):
+    content: str

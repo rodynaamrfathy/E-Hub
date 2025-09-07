@@ -1,10 +1,11 @@
 from services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
 import os
 import re
+import asyncio
+
 
 def extract_image_paths(text):
     """Extract valid image paths from user input, removing quotes and apostrophes"""
-    # Look for common path patterns with image extensions
     patterns = [
         r"['\"]([^'\"]*\.(?:png|jpg|jpeg|gif|webp))['\"]",  # Quoted paths
         r"(/[^\s]*\.(?:png|jpg|jpeg|gif|webp))",           # Unix absolute paths
@@ -17,7 +18,6 @@ def extract_image_paths(text):
         matches = re.findall(pattern, text, flags=re.IGNORECASE)
         found_paths.extend(matches)
     
-    # Clean and validate paths
     valid_paths = []
     for path in found_paths:
         cleaned_path = path.strip("'\"")
@@ -27,14 +27,14 @@ def extract_image_paths(text):
     
     return valid_paths
 
-def interactive_mode():
-    """Run chatbot interactively from terminal"""
-    print("Gemini Multimodal Chatbot (Interactive Mode)")
+
+async def interactive_mode():
+    """Run chatbot interactively with streaming output"""
+    print("Gemini Multimodal Chatbot (Streaming Mode)")
     print("=" * 50)
     
     chatbot = GeminiMultimodalChatbot()
     print(f"✅ Chatbot initialized with session ID: {chatbot.session_id}")
-    
     
     while True:
         try:
@@ -50,13 +50,12 @@ def interactive_mode():
             # Extract image paths from input
             images = extract_image_paths(user_input)
             
-            # Remove the file paths from the text to avoid confusion
+            # Clean input text (remove paths)
             clean_text = user_input
             for img_path in images:
                 clean_text = clean_text.replace(f"'{img_path}'", "").replace(f'"{img_path}"', "").replace(img_path, "")
             clean_text = clean_text.strip()
             
-            # If no meaningful text remains after removing paths, use a default question
             if not clean_text or len(clean_text.split()) < 2:
                 if images:
                     clean_text = "Can you help me identify this waste item and tell me how to recycle it in Egypt?"
@@ -64,16 +63,15 @@ def interactive_mode():
                     clean_text = user_input  
 
             print("🤖 Assistant: ", end="", flush=True)
-            
-            # Pass cleaned text and images to chatbot
-            result = chatbot.get_response(clean_text, images if images else None)
-            
-            if result["success"]:
-                print(result["response"])
 
-            else:
-                print(f"❌ Error: {result['error']}")
-                
+            # Stream tokens as they come in
+            async for token in chatbot.stream_response(clean_text, images if images else None):
+                print(token, end="", flush=True)
+
+            # Print final newline after streaming is done
+            print("\n" + "-" * 50)
+            print(f"📜 Full response: {chatbot.get_full_response()}")
+            
         except KeyboardInterrupt:
             print("\n👋 Goodbye!")
             break
@@ -82,4 +80,4 @@ def interactive_mode():
 
 
 if __name__ == "__main__":
-    interactive_mode()
+    asyncio.run(interactive_mode())

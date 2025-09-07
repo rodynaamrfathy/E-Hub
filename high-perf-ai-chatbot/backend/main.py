@@ -14,7 +14,7 @@ from services.models import Base
 
 # Routes (imported after AI instances to avoid circular imports)
 from api.chat import router as chat_router
-from api.upload import router as upload_router
+# from api.upload import router as upload_router
 
 
 # ----------------------------------------------------
@@ -158,8 +158,8 @@ async def submit_feedback(feedback: dict):
 # ----------------------------------------------------
 # Routers
 # ----------------------------------------------------
-app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
-app.include_router(upload_router, prefix="/api/upload", tags=["Upload"])
+app.include_router(chat_router, prefix="/chat", tags=["Chat"])
+#app.include_router(upload_router, prefix="/api/upload", tags=["Upload"])
 
 # ----------------------------------------------------
 # Run Server

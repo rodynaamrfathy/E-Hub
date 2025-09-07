@@ -1,10 +1,12 @@
 import asyncio
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, List, Optional
 import logging
+import tempfile
+import os
 from services.db.postgres import get_db_session
 from services.dto import (
     ConversationCreateDTO,
@@ -17,7 +19,7 @@ from services.dto import (
 from services.repositories.conversation_service import ConversationService
 from services.repositories.message_service import MessageService
 from services.repositories.history_service import get_conversation_history
-from services.conversation.multimodal_chatbot import GeminiMultimodalChatbot
+from services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
@@ -68,7 +70,6 @@ async def delete_conversation(
     return {"message": f"Conversation {conv_id} deleted"}
 
 
-
 @router.get("/{conv_id}/history", response_model=List[MessageHistoryDTO])
 async def conversation_history(
     conv_id: str,
@@ -78,49 +79,100 @@ async def conversation_history(
     history = await get_conversation_history(db, conv_id)
     return history
 
-
 @router.post("/{conv_id}/send-stream")
-async def send_message_stream(
+async def send_message_stream_with_images(
     conv_id: str,
-    payload: MessageCreateDTO,
+    content: str = Form(..., description="Message content"),
+    images: Optional[List[UploadFile]] = File(None, description="Optional image files"),
     db: AsyncSession = Depends(get_db_session),
 ):
     """
-    Send user message and stream assistant response (SSE).
+    Send user message with optional images and stream assistant response (SSE).
     """
-    msg_service = MessageService()
-    chatbot = GeminiMultimodalChatbot()
+    temp_files = []
+    image_paths = []
 
-    # Save user message
-    user_msg = await msg_service.create_message(
-        db, conv_id, sender="user", content=payload.content
-    )
+    try:
+        if not content.strip() and not images:
+            raise HTTPException(status_code=400, detail="Message content or images required")
 
-    async def event_generator() -> AsyncGenerator[str, None]:
-        try:
-            print(f"Starting stream for conversation {conv_id} with content: {payload.content}")
-            # Stream tokens from chatbot
-            async for token in chatbot.stream_response(payload.content):
-                print(f"Streaming token: {token}")
-                # yield token as SSE event
-                yield f"data: {json.dumps({'token': token})}\n\n"
-                await asyncio.sleep(0)  # let event loop breathe
+        # Save uploaded images to temp files
+        if images:
+            for img in images:
+                suffix = os.path.splitext(img.filename)[-1] or ".jpg"
+                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+                tmp.write(await img.read())
+                tmp.flush()
+                tmp.close()
+                temp_files.append(tmp.name)
+                image_paths.append(tmp.name)
 
-            # Save assistant full reply
-            reply_text = chatbot.get_full_response()
-            ai_msg = await msg_service.create_message(
-                db, conv_id, sender="assistant", content=reply_text
-            )
+        # Init chatbot for this conversation
+        chatbot = GeminiMultimodalChatbot(session_id=conv_id)
 
-            # Notify client that streaming is done
-            print("Streaming completed, sending [DONE]")
-            yield f"data: [DONE]\n\n"
+        # Message service
+        msg_service = MessageService()
 
-        except Exception as e:
-            print(f"Error in streaming: {e}")
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        # Save user message in DB
+        user_msg = await msg_service.create_message(
+            db, conv_id, sender="user", content=content
+        )
 
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream"
-    )
+        async def event_generator() -> AsyncGenerator[str, None]:
+            try:
+                logger.info(f"🔹 Starting stream for conv={conv_id}, content={content[:80]}...")
+                if image_paths:
+                    logger.info(f"Processing {len(image_paths)} images: {image_paths}")
+
+                full_response_tokens = []
+
+                # Stream from chatbot
+                async for token in chatbot.stream_response(content, image_paths if image_paths else None):
+                    full_response_tokens.append(token.strip())
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+                    await asyncio.sleep(0)
+
+                # Get full response (from chatbot memory or tokens)
+                full_response = chatbot.get_full_response() or " ".join(full_response_tokens).strip()
+
+                if full_response:
+                    ai_msg = await msg_service.create_message(
+                        db, conv_id, sender="assistant", content=full_response
+                    )
+                    logger.info(f"💬 Saved assistant response: {full_response[:80]}...")
+
+                yield "data: [DONE]\n\n"
+
+            except Exception as e:
+                logger.error(f"⚠️ Streaming error: {e}")
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+            finally:
+                # Clean up temp files
+                for path in temp_files:
+                    try:
+                        if os.path.exists(path):
+                            os.unlink(path)
+                    except:
+                        pass
+
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Access-Control-Allow-Origin": "*",
+            },
+        )
+
+    except Exception as e:
+        # Cleanup on failure
+        for path in temp_files:
+            try:
+                if os.path.exists(path):
+                    os.unlink(path)
+            except:
+                pass
+        logger.error(f"Unexpected error in send_message_stream_with_images: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
