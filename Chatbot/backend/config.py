@@ -14,6 +14,7 @@ DATABASE_URL_mcp_test='postgresql://neondb_owner:npg_YhJoUDEH61TF@ep-empty-poetr
 LANGSMITH_API_KEY="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"
 LANGSMITH_PROJECT="Dawar"
 LANGCHAIN_TRACING_V2="true"
+DATABASE_URL_mcp_test='postgresql://neondb_owner:npg_YhJoUDEH61TF@ep-empty-poetry-adnc151z-pooler.c-2.us-east-1.aws.neon.tech/ehub?sslmode=require&channel_binding=require'
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
