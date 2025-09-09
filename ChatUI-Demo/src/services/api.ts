@@ -8,55 +8,65 @@ export async function getStatus() {
 
 // Conversations
 export async function createConversation(title: string | null = null) {
-  const { data } = await axios.post(`${API_BASE}/api/chat/new`, { title })
+  const { data } = await axios.post(`${API_BASE}/chat/new`, { title })
   return data
 }
 
 export async function listConversations() {
-  const { data } = await axios.get(`${API_BASE}/api/chat/list`)
+  const { data } = await axios.get(`${API_BASE}/chat/list`)
   return data
 }
 
 export async function deleteConversationApi(convId: string) {
-  const { data } = await axios.delete(`${API_BASE}/api/chat/${convId}`)
+  const { data } = await axios.delete(`${API_BASE}/chat/${convId}`)
   return data
 }
 
 export async function getConversationHistory(convId: string) {
-  const { data } = await axios.get(`${API_BASE}/api/chat/${convId}/history`)
+  const { data } = await axios.get(`${API_BASE}/chat/${convId}/history`)
   return data
 }
 
-export async function sendMessageApi(convId: string, content: string) {
-  const { data } = await axios.post(`${API_BASE}/api/chat/${convId}/send-stream`, { content })
-  return data
-}
-
-// Streaming version using fetch with ReadableStream
-export function sendMessageStream(convId: string, content: string, onToken: (token: string) => void, onComplete: () => void, onError: (error: string) => void) {
+// Updated streaming function to match backend expectations
+export function sendMessageStream(
+  convId: string, 
+  content: string, 
+  images: File[] | null = null,
+  onToken: (token: string) => void, 
+  onComplete: () => void, 
+  onError: (error: string) => void
+) {
   const controller = new AbortController()
   
-  fetch(`${API_BASE}/api/chat/${convId}/send-stream`, {
+  // Create FormData to match backend endpoint
+  const formData = new FormData()
+  formData.append('content', content)
+  
+  // Add images if provided
+  if (images && images.length > 0) {
+    images.forEach(image => {
+      formData.append('images', image)
+    })
+  }
+  
+  fetch(`${API_BASE}/chat/${convId}/send-stream`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ content }),
+    body: formData, // Use FormData instead of JSON
     signal: controller.signal
   })
   .then(response => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
+  
     const reader = response.body?.getReader()
     if (!reader) {
       throw new Error('No response body')
     }
-    
+  
     const decoder = new TextDecoder()
     let buffer = ''
-    
+  
     function readStream(): Promise<void> {
       return reader.read().then(({ done, value }) => {
         if (done) {
@@ -64,7 +74,7 @@ export function sendMessageStream(convId: string, content: string, onToken: (tok
           onComplete()
           return
         }
-        
+  
         const chunk = decoder.decode(value, { stream: true })
         console.log('Received chunk:', chunk)
         buffer += chunk
@@ -119,29 +129,5 @@ export function sendMessageStream(convId: string, content: string, onToken: (tok
   }
 }
 
-// Images
-export async function uploadImageWithMessage(
-  convId: string,
-  file: File,
-  query: string = "What type of waste is this and how should I recycle it?"
-) {
-  const formData = new FormData()
-  formData.append('conv_id', convId)      // required
-  formData.append('query', query)         // optional
-  formData.append('image_file', file)     // must match `image_file` in backend
-
-  const { data } = await axios.post(
-    `${API_BASE}/api/upload/upload-image`,
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
-  )
-
-  return data
-}
-
-
-// Note: Image history endpoint doesn't exist in backend yet
-// export async function getImageHistory() {
-//   const { data } = await axios.get(`${API_BASE}/api/images/images/history`)
-//   return data
-// }
+// Remove the separate image upload function since it's now integrated into sendMessageStream
+// The backend only has the /send-stream endpoint for handling both text and images

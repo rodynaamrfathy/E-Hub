@@ -9,12 +9,8 @@ from datetime import datetime
 from services.db.postgres import db_manager
 from services.models import Base
 
-# AI instances (imported here to initialize them before routes)
-# from core.initializers import chatbot
-
-# Routes (imported after AI instances to avoid circular imports)
+# Routes 
 from api.chat import router as chat_router
-# from api.upload import router as upload_router
 
 
 # ----------------------------------------------------
@@ -89,7 +85,6 @@ async def startup_event():
         async with db_manager.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("✅ Database initialized and tables created successfully")
-        logger.info("✅ Chatbot & Agent initialized")
     except Exception as e:
         logger.error(f"Startup failed: {e}")
         raise

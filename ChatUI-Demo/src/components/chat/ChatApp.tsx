@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, Send, Image as ImageIcon, Trash2, Loader2, Paperclip } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Plus, Send, Image as ImageIcon, Trash2, Loader2, Paperclip, X } from 'lucide-react'
 import { 
   createConversation, listConversations, deleteConversationApi, 
-  getConversationHistory, sendMessageStream, uploadImageWithMessage
+  getConversationHistory, sendMessageStream
 } from '../../services/api'
 import type { ConversationListDTO, MessageHistoryDTO } from '../../types'
 import ReactMarkdown from "react-markdown"
-
 
 type LocalMsg = {
   id: string
@@ -23,8 +22,7 @@ export default function ChatApp() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  // Image history functionality removed as endpoint doesn't exist in backend
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
 
   const fileRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -102,20 +100,37 @@ export default function ChatApp() {
     }
   }
 
+  function onSelectImages(files: FileList | null) {
+    if (!files) return
+    const newImages = Array.from(files)
+    setSelectedImages(prev => [...prev, ...newImages])
+    // Clear the file input
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  function removeImage(index: number) {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
   async function onSend(){
-    if (!input.trim() || !currentConvId) return
+    if ((!input.trim() && selectedImages.length === 0) || !currentConvId) return
     
-    console.log('onSend called with input:', input, 'convId:', currentConvId)
+    console.log('onSend called with input:', input, 'convId:', currentConvId, 'images:', selectedImages.length)
     
+    // Create user message with attachments info
     const userMsg: LocalMsg = {
       id: `local-${Date.now()}`,
       role: 'user',
       content: input,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      attachments: selectedImages.length > 0 ? selectedImages.map(img => ({ name: img.name })) : undefined
     }
     setMessages(prev => [...prev, userMsg])
+    
     const userInput = input
+    const imagesToSend = selectedImages
     setInput('')
+    setSelectedImages([])
     setLoading(true)
     scrollToBottom()
 
@@ -129,11 +144,12 @@ export default function ChatApp() {
     }
     setMessages(prev => [...prev, assistantMsg])
 
-    // Use streaming API
-    console.log('Starting stream for conversation:', currentConvId, 'with input:', userInput)
+    // Use streaming API with images
+    console.log('Starting stream for conversation:', currentConvId, 'with input:', userInput, 'and images:', imagesToSend.length)
     currentStreamRef.current = sendMessageStream(
       currentConvId,
       userInput,
+      imagesToSend.length > 0 ? imagesToSend : null,
       (token) => {
         console.log('Received token:', token)
         // Update the assistant message with new token
@@ -166,38 +182,7 @@ export default function ChatApp() {
     )
   }
 
-  async function onUpload(files: FileList | null){
-    if (!files || !files.length || !currentConvId) return
-    setUploading(true)
-    for (const file of Array.from(files)){
-      // Show a local echo message
-      const echo: LocalMsg = {
-        id: `upload-${Date.now()}-${file.name}`,
-        role: 'user',
-        content: `📎 Uploaded: ${file.name}`,
-        timestamp: new Date().toISOString(),
-        attachments: [{ name: file.name }]
-      }
-      setMessages(prev => [...prev, echo])
-      scrollToBottom()
-      try {
-        const res = await uploadImageWithMessage(currentConvId, file)
-        const reply: LocalMsg = {
-          id: `${Date.now()}-reply`,
-          role: 'assistant',
-          content: typeof res === 'object' && res?.reply ? res.reply : 'Got it! Here is my analysis.',
-          timestamp: new Date().toISOString()
-        }
-        setMessages(prev => [...prev, reply])
-      } catch (e) {
-        setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: 'assistant', content: `❌ Failed to process ${file.name}.`, timestamp: new Date().toISOString() }])
-      }
-    }
-    setUploading(false)
-    if (fileRef.current) fileRef.current.value = ''
-  }
-
-  // Image history functionality removed as endpoint doesn't exist in backend
+  const canSend = (input.trim() || selectedImages.length > 0) && currentConvId && !loading
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4">
@@ -226,23 +211,22 @@ export default function ChatApp() {
           ))}
           {conversations.length===0 && <div className="text-sm text-gray-500">No conversations yet.</div>}
         </div>
-
-        {/* Image history functionality removed as endpoint doesn't exist in backend */}
       </aside>
 
       {/* Chat Panel */}
       <section className="bg-white rounded-2xl shadow-soft h-[70vh] md:h-[78vh] flex flex-col">
         {/* Messages */}
         <div className="flex-1 overflow-auto p-4 space-y-3">
-        {messages.map(m => (
+          {messages.map(m => (
             <div key={m.id} className={`flex ${m.role==='user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${m.role==='user' ? 'bg-brand text-white' : 'bg-gray-100 text-gray-800'}`}>
                 
-                {/* ✅ Render markdown instead of raw text */}
+                {/* Render markdown content */}
                 <div className="prose prose-sm max-w-none text-sm">
                   <ReactMarkdown>{m.content}</ReactMarkdown>
                 </div>
 
+                {/* Show attachments if any */}
                 {!!m.attachments?.length && (
                   <div className="mt-2 flex gap-2 text-xs opacity-80">
                     {m.attachments.map((a, i) => (
@@ -268,6 +252,26 @@ export default function ChatApp() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Selected Images Preview */}
+        {selectedImages.length > 0 && (
+          <div className="border-t border-b p-3 bg-gray-50">
+            <div className="flex flex-wrap gap-2">
+              {selectedImages.map((img, i) => (
+                <div key={i} className="relative inline-flex items-center gap-2 bg-white rounded-lg border px-3 py-2">
+                  <ImageIcon className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm truncate max-w-[120px]">{img.name}</span>
+                  <button
+                    onClick={() => removeImage(i)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Composer */}
         <div className="border-t p-3">
           <div className="flex items-stretch gap-2">
@@ -276,22 +280,22 @@ export default function ChatApp() {
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => onUpload(e.target.files)}
+              onChange={(e) => onSelectImages(e.target.files)}
               className="hidden"
             />
             <button
               onClick={() => fileRef.current?.click()}
               className="px-3 rounded-xl border hover:bg-gray-50"
-              disabled={uploading || !currentConvId}
-              title="Upload image"
+              disabled={!currentConvId}
+              title="Upload images"
             >
-              {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+              <ImageIcon className="w-5 h-5" />
             </button>
 
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key==='Enter') onSend() }}
+              onKeyDown={(e) => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
               placeholder="Ask about sustainability or recycling…"
               className="flex-1 px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
               disabled={!currentConvId}
@@ -299,7 +303,7 @@ export default function ChatApp() {
             <button
               onClick={onSend}
               className="inline-flex items-center gap-2 bg-brand hover:brightness-95 text-white px-4 rounded-xl disabled:opacity-50"
-              disabled={!input.trim() || !currentConvId || loading}
+              disabled={!canSend}
             >
               <Send className="w-4 h-4" />
               Send

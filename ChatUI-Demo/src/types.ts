@@ -1,13 +1,23 @@
-export interface ConversationListDTO {
-  conv_id: string
+// Conversation types
+export interface ConversationCreateDTO {
   title: string | null
-  updated_at: string
 }
 
 export interface ConversationResponseDTO {
   conv_id: string
-  title: string | null
+  title: string
   created_at: string
+}
+
+export interface ConversationListDTO {
+  conv_id: string
+  title: string
+  updated_at: string
+}
+
+// Message types
+export interface MessageCreateDTO {
+  content: string
 }
 
 export interface MessageResponseDTO {
@@ -19,29 +29,18 @@ export interface MessageResponseDTO {
 }
 
 export interface MessageHistoryDTO {
-  role: string
-  timestamp: string
-  type: string
-  content?: string | null
-  images?: ImageDTO[] | null
-}
-
-export interface ImageDTO {
-  image_id: string
-  mime_type: string
-  image_base64: string
-  classification?: ImageClassificationDTO | null
-}
-
-export interface ImageClassificationDTO {
-  label: string
-  recycle_instructions: string
-}
-
-export interface ImageHistoryDTO {
-  image_id: string
   msg_id: string
-  label: string
-  recycle_instructions: string
-  created_at: string
+  conv_id: string
+  role: string
+  content: string
+  timestamp: string
+}
+
+// API Response types
+export interface ApiError {
+  detail: string
+}
+
+export interface DeleteResponse {
+  message: string
 }

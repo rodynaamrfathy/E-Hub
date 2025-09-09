@@ -1,4 +1,6 @@
-API_KEY="AIzaSyCUXn2DwojUZqsxoqiaoibQsWJaMEOmEuQ"
+API_KEY="AIzaSyDpLH0MjHqlJ0PtL0ertJqqSuSDlmusUi4"
+#API_KEY="AIzaSyCUXn2DwojUZqsxoqiaoibQsWJaMEOmEuQ"
+#API_KEY="AIzaSyDVRdB4QCj_PxSSsaJtRZClxPRWHlHZg_Y"
 CHATBOT_MODEL="gemini-2.5-pro"
 MAX_HISTORY=50
 EXA_API_KEY ="25a0ccbd-511a-4f89-a134-8fd3dcc4dc68"
