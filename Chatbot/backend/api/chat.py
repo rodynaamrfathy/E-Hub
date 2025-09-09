@@ -19,7 +19,10 @@ from services.dto import (
 from services.repositories.conversation_service import ConversationService
 from services.repositories.message_service import MessageService
 from services.repositories.history_service import get_conversation_history
+from services.repositories.images_service import ImageService
 from services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
+import base64
+
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
@@ -117,6 +120,16 @@ async def send_message_stream_with_images(
         user_msg = await msg_service.create_message(
             db, conv_id, sender="user", content=content
         )
+
+        # after saving user_msg via MessageService.create_message(...)
+        if images:
+            for upload in images:
+                content = await upload.read()
+                b64 = base64.b64encode(content).decode("utf-8")
+                # pass user_msg.msg_id (which is a uuid.UUID) directly
+                await ImageService.create_image(db, user_msg.msg_id, upload.content_type or "application/octet-stream", b64)
+
+
 
         async def event_generator() -> AsyncGenerator[str, None]:
             try:

@@ -35,7 +35,7 @@ async def get_conversation_history(db: AsyncSession, conv_id: str) -> List[dict]
             for img in msg.images:
                 img_entry = {
                     "image_id": img.image_id,
-                    "mime_type": img.mime_type,
+                    "mime_type": img.mime_type or "image/jpeg",  # Handle None values
                     "image_base64": img.image_base64
                 }
                 if img.classification:
