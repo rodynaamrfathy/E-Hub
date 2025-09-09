@@ -1,44 +1,134 @@
+import aiohttp
 import asyncio
-import os
-from dotenv import load_dotenv
+from typing import Optional, List, Dict, Any
+import logging
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+logger = logging.getLogger(__name__)
 
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langgraph.prebuilt import create_react_agent
-from langchain_google_genai import ChatGoogleGenerativeAI
 
-load_dotenv()
-google_api_key = os.getenv("GOOGLE_API_KEY")
+class MCPClient:
+    """Async client for MCP server to query sustainability articles."""
 
-async def run_mcp_client():
-    # Start your MCP server (services/mcp/server.py)
-    server_params = StdioServerParameters(
-        command="python",
-        args=[os.path.abspath("services/mcp/server.py")],
-    )
+    def __init__(self, base_url: str = "http://localhost:8001", timeout: int = 10):
+        self.base_url = base_url.rstrip('/')
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        self._session = None
 
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """Get or create aiohttp session."""
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(timeout=self.timeout)
+        return self._session
 
-            # Load MCP tools (query_db, execute_db, etc.)
-            tools = await load_mcp_tools(session)
+    async def close(self):
+        """Close the aiohttp session."""
+        if self._session and not self._session.closed:
+            await self._session.close()
 
-            # Gemini as the reasoning LLM
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-2.5-pro",
-                google_api_key=google_api_key,
-            )
+    async def __aenter__(self):
+        return self
 
-            # Create an agent with Gemini + MCP tools
-            agent = create_react_agent(llm, tools)
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
-            # Example query
-            query = "Get me the latest articles about sustainability"
-            response = await agent.ainvoke({"messages": query})
-            print("Agent response:", response)
+    async def search_articles(
+        self, 
+        query: str, 
+        category: Optional[str] = None,
+        type_: Optional[str] = None, 
+        limit: int = 5
+    ) -> List[Dict[str, Any]]:
+        """Search articles using the MCP server."""
+        try:
+            session = await self._get_session()
+            payload = {
+                "query": query,
+                "category": category,
+                "type": type_,
+                "limit": limit
+            }
+            
+            async with session.post(
+                f"{self.base_url}/articles/search", 
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get("results", [])
+                else:
+                    logger.warning(f"MCP search failed with status {response.status}")
+                    return []
+                    
+        except asyncio.TimeoutError:
+            logger.error("MCP search request timed out")
+            return []
+        except Exception as e:
+            logger.error(f"MCP search error: {e}")
+            return []
 
-if __name__ == "__main__":
-    asyncio.run(run_mcp_client())
+    async def get_article(
+        self, 
+        article_id: Optional[int] = None, 
+        url: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Get a specific article by ID or URL."""
+        try:
+            session = await self._get_session()
+            payload = {"id": article_id, "url": url}
+            
+            async with session.post(
+                f"{self.base_url}/articles/get", 
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get("article")
+                else:
+                    logger.warning(f"MCP get_article failed with status {response.status}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"MCP get_article error: {e}")
+            return None
+
+    async def list_categories_types(self) -> Dict[str, List[str]]:
+        """Get available categories and types."""
+        try:
+            session = await self._get_session()
+            
+            async with session.get(
+                f"{self.base_url}/articles/categories-types"
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    logger.warning(f"MCP categories request failed with status {response.status}")
+                    return {"categories": [], "types": []}
+                    
+        except Exception as e:
+            logger.error(f"MCP categories error: {e}")
+            return {"categories": [], "types": []}
+
+    async def health_check(self) -> bool:
+        """Check if the MCP server is healthy."""
+        try:
+            session = await self._get_session()
+            
+            async with session.get(f"{self.base_url}/health") as response:
+                return response.status == 200
+                
+        except Exception:
+            return False
+
+    # Sync wrapper methods for backward compatibility
+    def search_articles_sync(self, *args, **kwargs) -> List[Dict[str, Any]]:
+        """Sync wrapper for search_articles."""
+        return asyncio.run(self.search_articles(*args, **kwargs))
+
+    def get_article_sync(self, *args, **kwargs) -> Optional[Dict[str, Any]]:
+        """Sync wrapper for get_article."""
+        return asyncio.run(self.get_article(*args, **kwargs))
+
+    def list_categories_types_sync(self) -> Dict[str, List[str]]:
+        """Sync wrapper for list_categories_types."""
+        return asyncio.run(self.list_categories_types())
