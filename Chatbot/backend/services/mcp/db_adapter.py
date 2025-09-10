@@ -22,3 +22,15 @@ def run_query(sql: str, fetch: bool = False):
     finally:
         cur.close()
         conn.close()
+
+def run_query_params(sql: str, params=None, fetch: bool = False):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(sql, params)
+        result = cur.fetchall() if fetch else None
+        conn.commit()
+        return result
+    finally:
+        cur.close()
+        conn.close()
