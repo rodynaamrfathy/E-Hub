@@ -17,7 +17,6 @@ from config import LANGSMITH_API_KEY
 import yaml
 
 
-LANGSMITH_API_KEY="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"
 # use langsmith client
 from langsmith import Client
 client = Client(api_key=LANGSMITH_API_KEY)
