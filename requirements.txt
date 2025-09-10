@@ -16,3 +16,8 @@ google-generativeai
 tensorboard
 langchain-exa
 rapidfuzz
+asyncpg>=0.28.0
+mcp>=0.1.0
+python-dotenv>=1.0.0
+uvicorn>=0.23.0
+fastapi>=0.100.0
