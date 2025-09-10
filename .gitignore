@@ -25,3 +25,4 @@ node_modules/
 *.png
 ChatbotandImageClassifier/venv
 myenv
+/Users/rodynaamr/E-Hub2/E-Hub/Chatbot/backend/config.py

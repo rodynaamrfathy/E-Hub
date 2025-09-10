@@ -12,6 +12,45 @@ from services.models import Base
 # Routes 
 from api.chat import router as chat_router
 
+from langsmith.run_helpers import traceable, get_current_run_tree
+from config import LANGSMITH_API_KEY
+import yaml
+
+
+LANGSMITH_API_KEY="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"
+# use langsmith client
+from langsmith import Client
+client = Client(api_key=LANGSMITH_API_KEY)
+
+YAML_PATH = "services/utils/chatbot_prompt.yaml"
+
+
+async def load_and_save_system_prompt():
+    """Load system prompt from LangSmith and save to YAML file."""
+    try:
+        prompt = client.pull_prompt("dawaragent")
+
+        # Convert to string
+        if hasattr(prompt, "format"):  # ChatPromptTemplate
+            system_prompt_str = prompt.format(question="")
+        elif hasattr(prompt, "to_string"):  # PromptValue
+            system_prompt_str = prompt.to_string()
+        elif isinstance(prompt, str):
+            system_prompt_str = prompt
+        else:
+            system_prompt_str = str(prompt)
+
+        # Write to YAML
+        data = {"system_prompt": system_prompt_str}
+        with open(YAML_PATH, "w", encoding="utf-8") as f:
+            yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
+
+        print(f"✅ System prompt loaded from LangSmith and saved to YAML at {YAML_PATH}")
+        return system_prompt_str
+
+    except Exception as e:
+        print(f"⚠️ Failed to load system prompt from LangSmith: {e}")
+        return None
 
 # ----------------------------------------------------
 # Logging
@@ -85,6 +124,10 @@ async def startup_event():
         async with db_manager.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("✅ Database initialized and tables created successfully")
+
+        # 2) Load and overwrite system prompt
+        await load_and_save_system_prompt()
+        logger.info("✅ system_prompt")
     except Exception as e:
         logger.error(f"Startup failed: {e}")
         raise
