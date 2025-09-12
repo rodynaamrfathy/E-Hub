@@ -98,17 +98,8 @@ class article_retriever:
                 valid_rows.append(row)
 
         embeddings = np.vstack(parsed_embeddings).astype(float)
-        results = embedder_model.get_similarity(prompt, valid_rows, embeddings)
+        results = self.get_similarity(prompt, valid_rows, embeddings)
         return results
 
 
-
-
-
-if __name__ == "__main__":
-    embedder_model = article_retriever()
-    results = embedder_model.article_search("Waste-to-energy power plants")
-
-for key, value in results[0].items():
-    print(f"{key}: {value}")
 
