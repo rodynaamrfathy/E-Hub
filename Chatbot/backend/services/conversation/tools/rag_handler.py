@@ -20,7 +20,7 @@ class EmbeddingProcessor:
     def get_embeddings(self, texts):
         """Get embeddings for a list of texts."""
         embeddings = []
-        print(f"Processing {len(texts)} texts...")
+        print(f"Processing prompt ...")
         
         for i, text in enumerate(texts):
             try:
@@ -39,7 +39,32 @@ class EmbeddingProcessor:
                 continue
         
         return np.array(embeddings)
-    
+
+    def _to_float_array(self,val, expected_dim=768):
+        if val is None:
+            return None
+        try:
+            if isinstance(val, (list, tuple, np.ndarray)):
+                arr = np.asarray(val, dtype=float)
+            elif isinstance(val, (bytes, bytearray)):
+                s = val.decode("utf-8", errors="ignore").strip()
+                arr = np.asarray(json.loads(s), dtype=float)
+            elif isinstance(val, str):
+                s = val.strip()
+                if s.startswith("["):
+                    arr = np.asarray(json.loads(s), dtype=float)
+                else:
+                    arr = np.asarray([float(x) for x in s.split(",")], dtype=float)
+            else:
+                return None
+            arr = arr.reshape(-1)
+            if expected_dim is not None and arr.size != expected_dim:
+                return None
+            return arr
+        except Exception:
+            return None
+
+        
     def get_similarity(self, query, rows, embeddings, top_k=3, threshold=0.70):
         """Return top-k similar articles with metadata and query prompt."""
         query_emb = self.get_embeddings([query]) 
@@ -62,59 +87,28 @@ class EmbeddingProcessor:
             })
         return results
 
+    def article_search(self,prompt):
+        rows = run_query("SELECT id, title, url, summary, embeddings FROM articles", fetch=True)
 
-def _to_float_array(val, expected_dim=768):
-    if val is None:
-        return None
-    try:
-        if isinstance(val, (list, tuple, np.ndarray)):
-            arr = np.asarray(val, dtype=float)
-        elif isinstance(val, (bytes, bytearray)):
-            s = val.decode("utf-8", errors="ignore").strip()
-            arr = np.asarray(json.loads(s), dtype=float)
-        elif isinstance(val, str):
-            s = val.strip()
-            if s.startswith("["):
-                arr = np.asarray(json.loads(s), dtype=float)
-            else:
-                arr = np.asarray([float(x) for x in s.split(",")], dtype=float)
-        else:
-            return None
-        arr = arr.reshape(-1)
-        if expected_dim is not None and arr.size != expected_dim:
-            return None
-        return arr
-    except Exception:
-        return None
+        parsed_embeddings, valid_rows = [], []
+        for row in rows:
+            arr = self._to_float_array(row["embeddings"], expected_dim=768)
+            if arr is not None:
+                parsed_embeddings.append(arr)
+                valid_rows.append(row)
+
+        embeddings = np.vstack(parsed_embeddings).astype(float)
+        results = embedder_model.get_similarity(prompt, valid_rows, embeddings)
+        return results
 
 
-# === Example Usage ===
-queries = [
-    "Irrigation techniques used by farmers",
-    "solar energy in Egypt",
-    "Renewable energy capacity improvements",
-    "Waste-to-energy power plants"
-]
 
-embedder_model = EmbeddingProcessor()
-rows = run_query("SELECT id, title, url, summary, embeddings FROM articles", fetch=True)
 
-parsed_embeddings, valid_rows = [], []
-for row in rows:
-    arr = _to_float_array(row["embeddings"], expected_dim=768)
-    if arr is not None:
-        parsed_embeddings.append(arr)
-        valid_rows.append(row)
 
-embeddings = np.vstack(parsed_embeddings).astype(float)
+if __name__ == "__main__":
+    embedder_model = EmbeddingProcessor()
+    results = embedder_model.article_search("Waste-to-energy power plants")
 
-for query in queries:
-    results = embedder_model.get_similarity(query, valid_rows, embeddings)
-    print(f"\nQuery: {query}")
-    for r in results:
-        print(f"{r['similarity_score']:.3f} -> {r['title']} ({r['url']})")
-        print(f"Summary: {r['summary']}")
-        print(f"Prompt: {r['prompt']}")
-        print(f"Title: {r['title']}")
-        print(f"URL: {r['url']}")
-        print("-" * 80)
+for key, value in results[0].items():
+    print(f"{key}: {value}")
+
