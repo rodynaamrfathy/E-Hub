@@ -9,7 +9,7 @@ import json
 
 load_dotenv()
 
-class EmbeddingProcessor:
+class article_retriever:
     
     def __init__(self):
         """Initialize the processor with API configuration."""
@@ -106,7 +106,7 @@ class EmbeddingProcessor:
 
 
 if __name__ == "__main__":
-    embedder_model = EmbeddingProcessor()
+    embedder_model = article_retriever()
     results = embedder_model.article_search("Waste-to-energy power plants")
 
 for key, value in results[0].items():
