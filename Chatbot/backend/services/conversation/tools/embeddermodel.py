@@ -8,7 +8,7 @@ load_dotenv()
 class embedder:
     def __init__(self):
         """Initialize the processor with API configuration."""
-        self.api_key = os.getenv("GOOGLE_API_KEY_M")
+        self.api_key = os.getenv("GOOGLE_API_KEY_MM")
         genai.configure(api_key=self.api_key)
         self.model = "models/gemini-embedding-exp-03-07"
 

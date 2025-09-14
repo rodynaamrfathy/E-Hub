@@ -1,4 +1,4 @@
-API_KEY="AIzaSyDpLH0MjHqlJ0PtL0ertJqqSuSDlmusUi4"
+API_KEY="AIzaSyABuGv3RLpMLhc97lbJdHkObbj95al8eN0"
 #API_KEY="AIzaSyCUXn2DwojUZqsxoqiaoibQsWJaMEOmEuQ"
 #API_KEY="AIzaSyDVRdB4QCj_PxSSsaJtRZClxPRWHlHZg_Y"
 CHATBOT_MODEL="gemini-2.5-pro"

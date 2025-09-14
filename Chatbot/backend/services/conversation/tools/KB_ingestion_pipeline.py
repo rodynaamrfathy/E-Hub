@@ -92,51 +92,51 @@ class KB_IngestionPipeline:
 
 
 
-if __name__ == "__main__":
-    pipeline = KB_IngestionPipeline()
+# if __name__ == "__main__":
+#     pipeline = KB_IngestionPipeline()
 
-    # Dummy entries for testing (simulating your YAML KB)
-    sample_entries = [
-        {
-            "id": str(uuid.uuid4()),
-            "content_type": "faq",
-            "title": "Waste Management",
-            "content": "Solutions for handling industrial and municipal waste.",
-            "metadata": {"category": "environment"},
-            "keywords": ["waste", "management", "environment"],
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "content_type": "policy",
-            "title": "AI Safety Policy",
-            "content": "Guidelines for ethical use of AI in organizations.",
-            "metadata": {"category": "AI"},
-            "keywords": ["AI", "safety", "policy"],
-        }
-    ]
+#     # Dummy entries for testing (simulating your YAML KB)
+#     sample_entries = [
+#         {
+#             "id": str(uuid.uuid4()),
+#             "content_type": "faq",
+#             "title": "Waste Management",
+#             "content": "Solutions for handling industrial and municipal waste.",
+#             "metadata": {"category": "environment"},
+#             "keywords": ["waste", "management", "environment"],
+#         },
+#         {
+#             "id": str(uuid.uuid4()),
+#             "content_type": "policy",
+#             "title": "AI Safety Policy",
+#             "content": "Guidelines for ethical use of AI in organizations.",
+#             "metadata": {"category": "AI"},
+#             "keywords": ["AI", "safety", "policy"],
+#         }
+#     ]
 
-    print("\n🚀 Starting KB ingestion test...\n")
+#     print("\n🚀 Starting KB ingestion test...\n")
 
-    inserted, updated, skipped, failed = 0, 0, 0, 0
-    for entry in sample_entries:
-        result = pipeline.ingest_entry(entry)
-        if result:
-            if result["status"] == "inserted":
-                inserted += 1
-            elif result["status"] == "updated":
-                updated += 1
-            elif result["status"] == "skipped":
-                skipped += 1
-            else:
-                failed += 1
-        else:
-            failed += 1
+#     inserted, updated, skipped, failed = 0, 0, 0, 0
+#     for entry in sample_entries:
+#         result = pipeline.ingest_entry(entry)
+#         if result:
+#             if result["status"] == "inserted":
+#                 inserted += 1
+#             elif result["status"] == "updated":
+#                 updated += 1
+#             elif result["status"] == "skipped":
+#                 skipped += 1
+#             else:
+#                 failed += 1
+#         else:
+#             failed += 1
 
-    print(f"\n📊 Test Ingestion Summary:")
-    print(f"✅ Inserted: {inserted}")
-    print(f"🔄 Updated: {updated}")
-    print(f"⏭️ Skipped: {skipped}")
-    print(f"❌ Failed: {failed}")
+#     print(f"\n📊 Test Ingestion Summary:")
+#     print(f"✅ Inserted: {inserted}")
+#     print(f"🔄 Updated: {updated}")
+#     print(f"⏭️ Skipped: {skipped}")
+#     print(f"❌ Failed: {failed}")
 
 ##suggested api
 # @app.post("/kb/ingest")

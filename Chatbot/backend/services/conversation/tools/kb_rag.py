@@ -1,10 +1,10 @@
 from operator import imod
-from Chatbot.backend.services.conversation.tools.embeddermodel import embedder
-from Chatbot.backend.services.mcp.db_adapter import run_query
+from services.conversation.tools.embeddermodel import embedder
+from services.mcp.db_adapter import run_query
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import json
-class kb_retrieve:
+class kb_retriever:
     def __init__(self) :
         self.embedder= embedder()
 
@@ -89,6 +89,6 @@ class kb_retrieve:
             return []
 
 
-search=kb_retrieve()
-result=search.search_kb("what is the diffrence between environ and dawar?")
-print(result)
+# search=kb_retriever()
+# result=search.search_kb("what is the diffrence between environ and dawar?")
+# print(result)

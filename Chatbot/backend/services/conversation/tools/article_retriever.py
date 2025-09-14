@@ -4,7 +4,7 @@ import google.generativeai as genai
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
-from Chatbot.backend.services.mcp.db_adapter import run_query
+from services.mcp.db_adapter import run_query
 import json
 
 load_dotenv()
@@ -13,7 +13,7 @@ class article_retriever:
     
     def __init__(self):
         """Initialize the processor with API configuration."""
-        self.api_key = os.getenv("GOOGLE_API_KEY_M")
+        self.api_key = os.getenv("GOOGLE_API_KEY_MM")
         genai.configure(api_key=self.api_key)
         self.model = "models/gemini-embedding-exp-03-07"
     
@@ -101,5 +101,18 @@ class article_retriever:
         results = self.get_similarity(prompt, valid_rows, embeddings)
         return results
 
+    def get_references(self, prompt, max_results=5):
+        article_results = self.article_search(prompt)
+
+        references = []
+        for art in article_results[:max_results]:
+            references.append({
+                "title": art["title"],
+                "url": art["url"]
+            })
+        return references
 
 
+
+
+  

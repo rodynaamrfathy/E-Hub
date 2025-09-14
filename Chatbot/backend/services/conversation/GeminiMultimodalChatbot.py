@@ -6,7 +6,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
 from services.utils.chatmessage import ChatMessage  
-from services.utils.kb_handler import KB_handler  
 from config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, get_gemini, EXA_API_KEY
 from services.conversation.session_manager import SessionManager
 from services.models.response_types import ChatResponse
@@ -19,7 +18,8 @@ import uuid
 import io
 import asyncio
 from PIL import Image
-
+from services.conversation.tools.article_retriever import article_retriever
+from services.conversation.tools.kb_rag import kb_retriever
 
 class GeminiMultimodalChatbot:
     """Multimodal chatbot with history awareness."""
@@ -29,6 +29,8 @@ class GeminiMultimodalChatbot:
         self.model_name = CHATBOT_MODEL
         self.max_history = MAX_HISTORY
         self.exa_api= "25a0ccbd-511a-4f89-a134-8fd3dcc4dc68"
+        self.article_retriever= article_retriever()
+        self.kb_retriever=kb_retriever()
 
         # LLM
         self.llm = get_gemini()
@@ -39,7 +41,7 @@ class GeminiMultimodalChatbot:
         )
 
         # Retriever
-        self.retriever = ExaSearchRetriever(exa_api_key=self.exa_api, k=5, highlights=True,
+        self.exa_retriever = ExaSearchRetriever(exa_api_key=self.exa_api, k=5, highlights=True,
                                             livecrawl='fallback')
 
         # Session + Messages
@@ -52,8 +54,7 @@ class GeminiMultimodalChatbot:
 
         # Load past history
         self._rehydrate_history()
-        #Load KB
-        self.kb = KB_handler._load_kb()
+
 
     def _load_prompt(self) -> str:
         """Load system prompt from YAML file."""
@@ -120,70 +121,87 @@ class GeminiMultimodalChatbot:
 
 
 
-    async def _maybe_retrieve(self, query: str, max_results: int = 5, similarity_threshold: int = 70):
+    async def _maybe_retrieve(self, query: str, max_results: int = 5, similarity_threshold: float = 0.7):
         try:
-            # 1) KB search first
-            kb_results = KB_handler._search_kb(query, max_results=max_results, threshold=65)
-
             results, references = [], []
 
+            # 1) Try KB search
+            kb_results = self.kb_retriever.search_kb(query, top_k=max_results, threshold=similarity_threshold)
+            kb_found = False
+
             if kb_results:
-                results.append(kb_results)
-
-            # 2) If KB empty → fallback to Exa search
-            if not kb_results:
-                docs = self.retriever.invoke(query)
-
-                scored_docs = []
-                for d in docs:
-                    if not d.page_content:
-                        continue
-
-                    # fuzzy partial match (query vs doc content)
-                    score = fuzz.partial_ratio(query.lower(), d.page_content.lower())
-
-                    if score >= similarity_threshold:
-                        scored_docs.append((d, score))
-
-                # sort by fuzzy score
-                scored_docs = sorted(scored_docs, key=lambda x: x[1], reverse=True)[:max_results]
-
-                for d, score in scored_docs:
-                    metadata = d.metadata or {}
-                    title = metadata.get("title", "Untitled").strip()
-                    url = metadata.get("url", "").strip()
-                    highlights = metadata.get("highlights", "N/A")
-
-                    link = f"[{title}]({url})" if url else title
+                kb_found = True
+                for r in kb_results:
                     snippet = (
-                        f"- {d.page_content.strip()}\n"
-                        f"  Highlights: {highlights}\n"
-                        f"  Fuzzy similarity: {score}\n"
-                        f"  Source: {link}"
+                        f"- {r['content'].strip()}\n"
+                        f"  Similarity: {r['similarity_score']:.3f}\n"
+                        f"  Source: {r['title']}"
                     )
                     results.append(snippet)
                     references.append({
-                        "title": title,
-                        "url": url,
-                        "highlights": highlights,
-                        "content": d.page_content.strip(),
-                        "similarity": score
+                        "title": r["title"],      
+                        "content": r["content"]  
                     })
+            print(f"🔍 KB search for '{query}' returned {len(kb_results) if kb_results else 0} results")
 
-            if not results:
+
+            # 2) Always run Article search (append only title + url if found)
+            article_results=self.article_retriever.get_references(query, max_results=3)
+            print(f"🔍 article search for '{query}' returned {len(article_results) if article_results else 0} results")
+
+            # ✅ If KB already gave results → return (with articles included as references)
+            if kb_found:
+                return {
+                    "context": "\n".join(results),
+                    "references": references,
+                }
+
+            # 3) If KB empty → fallback to Exa search
+            docs = self.exa_retriever.invoke(query)
+            scored_docs = []
+
+            for d in docs:
+                if not d.page_content:
+                    continue
+                score = fuzz.partial_ratio(query.lower(), d.page_content.lower()) / 100.0
+                if score >= similarity_threshold:
+                    scored_docs.append((d, score))
+
+            scored_docs = sorted(scored_docs, key=lambda x: x[1], reverse=True)[:max_results]
+
+            for d, score in scored_docs:
+                metadata = d.metadata or {}
+                title = metadata.get("title", "Untitled").strip()
+                url = metadata.get("url", "").strip()
+                highlights = metadata.get("highlights", "N/A")
+
+                link = f"[{title}]({url})" if url else title
+                snippet = (
+                    f"- {d.page_content.strip()}\n"
+                    f"  Highlights: {highlights}\n"
+                    f"  Similarity: {score:.3f}\n"
+                    f"  Source: {link}"
+                )
+                results.append(snippet)
+                references.append({
+                    "title": title,
+                    "url": url,
+                    "highlights": highlights,
+                    "content": d.page_content.strip(),
+                    "similarity": score,
+                })
+
+            if not results and not article_results:
                 return None
 
             return {
                 "context": "\n".join(results),
-                "references": references
+                "references": references,
             }
 
         except Exception as e:
             print(f"⚠️ Retrieval error: {e}")
             return None
-
-
-
     async def get_response_async(self, user_input: str, images=None):
         try:
             # Process images
