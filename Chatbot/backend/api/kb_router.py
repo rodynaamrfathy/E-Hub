@@ -188,28 +188,28 @@ async def delete_kb_entry(kb_id: str, db: AsyncSession = Depends(get_db_session)
         )
 
 
-@router.post("/search", response_model=List[KBEntryResponseDTO])
-async def search_kb_entries(
-    query: str,
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of results to return"),
-    similarity_threshold: float = Query(0.7, ge=0.0, le=1.0, description="Minimum similarity score"),
-    db: AsyncSession = Depends(get_db_session)
-):
-    """Semantic search across KB entries using embeddings."""
-    try:
-        kb_service = KBContentService(db)
+# @router.post("/search", response_model=List[KBEntryResponseDTO])
+# async def search_kb_entries(
+#     query: str,
+#     limit: int = Query(10, ge=1, le=100, description="Maximum number of results to return"),
+#     similarity_threshold: float = Query(0.7, ge=0.0, le=1.0, description="Minimum similarity score"),
+#     db: AsyncSession = Depends(get_db_session)
+# ):
+#     """Semantic search across KB entries using embeddings."""
+#     try:
+#         kb_service = KBContentService(db)
         
-        # Perform semantic search
-        results = await kb_service.semantic_search(
-            query=query,
-            limit=limit,
-            similarity_threshold=similarity_threshold
-        )
+#         # Perform semantic search
+#         results = await kb_service.semantic_search(
+#             query=query,
+#             limit=limit,
+#             similarity_threshold=similarity_threshold
+#         )
         
-        return [KBEntryResponseDTO(**result) for result in results]
+#         return [KBEntryResponseDTO(**result) for result in results]
         
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
-        )
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"Internal server error: {str(e)}"
+#         )
