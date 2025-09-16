@@ -206,17 +206,3 @@ class KB_Retriever:
         except Exception:
             return None
 
-
-# Usage example
-# if __name__ == "__main__":
-#     retriever = KB_Retriever()
-#     print("🚀 Starting KB population...")
-#     success = retriever.populate_database()
-#     print("\n🔍 Testing search functionality...")
-#     prompt="does dawar recycle carpets?"
-#     results = retriever.search_kb(prompt, top_k=5)
-#     for result in results:
-#         print(f"📄 {result['title']} (Score: {result['similarity_score']:.3f})")
-#         print(f'content= {result['content']}')
-#     else:
-#         print("❌ Failed to populate database")

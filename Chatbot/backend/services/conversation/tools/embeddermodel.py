@@ -12,6 +12,7 @@ class embedder:
         genai.configure(api_key=self.api_key)
         self.model = "models/gemini-embedding-exp-03-07"
 
+
     def get_embeddings(self, texts):
         """Get embeddings for a list of texts."""
         embeddings = []    
@@ -32,3 +33,4 @@ class embedder:
                 continue
         
         return np.array(embeddings)
+

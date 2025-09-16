@@ -4,7 +4,6 @@ from services.mcp.db_adapter import run_query
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import json
-
 class kb_retriever:
     def __init__(self) :
         self.embedder= embedder()
