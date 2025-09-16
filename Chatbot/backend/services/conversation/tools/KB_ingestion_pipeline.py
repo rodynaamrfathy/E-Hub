@@ -145,4 +145,3 @@ class KB_IngestionPipeline:
 #     if not result or result["status"] == "failed":
 #         raise HTTPException(status_code=400, detail="Failed to ingest entry")
 #     return result
-
