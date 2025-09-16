@@ -1,0 +1,148 @@
+{
+	"info": {
+		"_postman_id": "a9edf42f-aeaa-47f5-976e-88b4c5f9db2b",
+		"name": "Knowledge Base API",
+		"description": "Postman collection for FastAPI Knowledge Base CRUD operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "46742383",
+		"_collection_link": "https://rodynaamr-9568229.postman.co/workspace/399bee91-af8f-4fbf-b0d2-7ddf8e7d958e/collection/46742383-a9edf42f-aeaa-47f5-976e-88b4c5f9db2b?action=share&source=collection_link&creator=46742383"
+	},
+	"item": [
+		{
+			"name": "Create KB Entry",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Sample Entry\",\n  \"content\": \"This is a test KB entry.\",\n  \"content_type\": \"article\",\n  \"metadata\": {\n    \"author\": \"John Doe\",\n    \"partners\": [\n      \"HEPCA (Reducing ocean plastics in the Red Sea)\",\n      \"Fair Labor Organization (Ethical sourcing framework)\",\n      \"Banlastic (Beach waste to energy in Alexandria)\"\n    ],\n    \"focus_areas\": [\"ocean_plastic_reduction\", \"ethical_sourcing\", \"waste_to_energy\"],\n    \"geographic_focus\": [\"Red Sea\", \"Alexandria\"],\n    \"partnership_type\": \"ngos\"\n  },\n  \"keywords\": [\"fastapi\", \"kb\"]\n}\n"
+				},
+				"url": {
+					"raw": "{{base_url}}/kb/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"kb",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get KB Entry by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/kb/{{kb_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"kb",
+						"{{kb_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List All KB Entries",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/kb/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"kb",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update KB Entry",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated content for KB entry.\",\n  \"metadata\": {\"editor\": \"Jane Doe\"}\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/kb/{{kb_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"kb",
+						"{{kb_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete KB Entry",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/kb/{{kb_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"kb",
+						"{{kb_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "kb_id",
+			"value": "replace-with-uuid"
+		}
+	]
+}
