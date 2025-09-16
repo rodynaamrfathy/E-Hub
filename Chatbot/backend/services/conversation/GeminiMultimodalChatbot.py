@@ -126,7 +126,7 @@ class GeminiMultimodalChatbot:
             results, references = [], []
 
             # 1) Try KB search
-            kb_results = self.kb_retriever.search_kb(query, top_k=max_results, threshold=similarity_threshold)
+            kb_results = await self.kb_retriever.search_kb(query, top_k=max_results, threshold=similarity_threshold)
             kb_found = False
 
             if kb_results:
@@ -145,11 +145,18 @@ class GeminiMultimodalChatbot:
             print(f"🔍 KB search for '{query}' returned {len(kb_results) if kb_results else 0} results")
 
 
-            # 2) Always run Article search (append only title + url if found)
-            article_results=self.article_retriever.get_references(query, max_results=3)
+            # 2) Run Article search and include link references when available
+            article_results = await self.article_retriever.get_references(query, max_results=5)
             print(f"🔍 article search for '{query}' returned {len(article_results) if article_results else 0} results")
 
-            # ✅ If KB already gave results → return (with articles included as references)
+            if article_results:
+                for art in article_results:
+                    references.append({
+                        "title": art.get("title", "Untitled"),
+                        "url": art.get("url"),
+                    })
+
+            # ✅ If KB already gave results → return (with article links appended)
             if kb_found:
                 return {
                     "context": "\n".join(results),
@@ -230,7 +237,10 @@ class GeminiMultimodalChatbot:
             final_response = response.content
             if references:  # only if Exa used
                 refs_formatted = "\n\n📎 References:\n" + "\n".join(
-                    [f"- [{r['title']}]({r['url']})" if r["url"] else f"- {r['title']}" for r in references]
+                    [
+                        (f"- [{r.get('title','Untitled')}]({r.get('url')})" if r.get("url") else f"- {r.get('title','Untitled')}")
+                        for r in references
+                    ]
                 )
                 final_response += refs_formatted
             # Update memory & history
@@ -302,7 +312,10 @@ class GeminiMultimodalChatbot:
             # Add references at the end (if Exa used)
             if references:
                 refs_formatted = "\n\n📎 References:\n" + "\n".join(
-                    [f"- [{r['title']}]({r['url']})" if r["url"] else f"- {r['title']}" for r in references]
+                    [
+                        (f"- [{r.get('title','Untitled')}]({r.get('url')})" if r.get("url") else f"- {r.get('title','Untitled')}")
+                        for r in references
+                    ]
                 )
                 final_response.append(refs_formatted)
                 yield refs_formatted

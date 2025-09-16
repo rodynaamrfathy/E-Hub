@@ -1,23 +1,34 @@
 from operator import imod
 from services.conversation.tools.embeddermodel import embedder
-from services.mcp.db_adapter import run_query
+from services.db.postgres import db_manager
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import json
+from services.repositories.kb_service import KBContentService
 
 class kb_retriever:
     def __init__(self) :
         self.embedder= embedder()
+        
 
-    def search_kb(self, query, top_k=5, threshold=0.7):
+    async def _get_service(self):
+        """Context manager that yields a KBContentService bound to a fresh session."""
+        class _SvcCtx:
+            async def __aenter__(self_inner):
+                self_inner._session_ctx = db_manager.get_session()
+                self_inner._session = await self_inner._session_ctx.__aenter__()
+                self_inner.service = KBContentService(self_inner._session)
+                return self_inner.service
+            async def __aexit__(self_inner, exc_type, exc, tb):
+                await self_inner._session_ctx.__aexit__(exc_type, exc, tb)
+        return _SvcCtx()
+
+    async def search_kb(self, query, top_k=5, threshold=0.7):
         """Search the KB using semantic similarity."""
+
         try:
-            sql = """
-                SELECT id, content_type, title, content, metadata, keywords, embedding
-                FROM kb_content
-                WHERE embedding IS NOT NULL
-            """
-            rows = run_query(sql, fetch=True)
+            async with await self._get_service() as service:
+                rows = await service.get_all_embeddings()
 
             if not rows:
                 print("⚠️ No entries found in database")
@@ -75,12 +86,32 @@ class kb_retriever:
     def _parse_embedding(self, embedding_data):
         """Parse embedding data from database."""
         try:
-            if isinstance(embedding_data, str):
-                return np.array(json.loads(embedding_data), dtype=float)
-            elif isinstance(embedding_data, (list, tuple)):
-                return np.array(embedding_data, dtype=float)
-            else:
+            # Already a numpy array or list-like
+            if hasattr(embedding_data, "tolist"):
+                return np.asarray(embedding_data, dtype=float).reshape(-1)
+            if isinstance(embedding_data, (list, tuple)):
+                return np.asarray(embedding_data, dtype=float).reshape(-1)
+
+            # Memoryview / bytes containing JSON text or comma-separated values
+            if isinstance(embedding_data, (memoryview, bytes, bytearray)):
+                text = bytes(embedding_data).decode("utf-8", errors="ignore").strip()
+                if text:
+                    try:
+                        return np.asarray(json.loads(text), dtype=float).reshape(-1)
+                    except Exception:
+                        parts = [p for p in text.replace("[", "").replace("]", "").split(",") if p.strip()]
+                        return np.asarray([float(x) for x in parts], dtype=float).reshape(-1)
                 return None
+
+            # String with JSON array or comma-separated numbers
+            if isinstance(embedding_data, str):
+                s = embedding_data.strip()
+                if s.startswith("["):
+                    return np.asarray(json.loads(s), dtype=float).reshape(-1)
+                parts = [p for p in s.split(",") if p.strip()]
+                return np.asarray([float(x) for x in parts], dtype=float).reshape(-1)
+
+            return None
         except Exception:
             return None
 

@@ -122,13 +122,12 @@ async def send_message_stream_with_images(
         )
 
         # after saving user_msg via MessageService.create_message(...)
-        if images:
-            for upload in images:
-                content = await upload.read()
-                b64 = base64.b64encode(content).decode("utf-8")
-                # pass user_msg.msg_id (which is a uuid.UUID) directly
-                await ImageService.create_image(db, user_msg.msg_id, upload.content_type or "application/octet-stream", b64)
-
+        # if images:
+        #     for upload in images:
+        #         content = await upload.read()
+        #         b64 = base64.b64encode(content).decode("utf-8")
+        #         # Convert UUID to string
+        #         await ImageService.create_image(db, str(user_msg.msg_id), upload.content_type or "application/octet-stream", b64)
 
 
         async def event_generator() -> AsyncGenerator[str, None]:

@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP
-from sqlalchemy.dialects.postgresql import TSVECTOR
 from .base import Base
 
 class Article(Base):
@@ -14,5 +13,4 @@ class Article(Base):
     type = Column(String(50), nullable=False)
     published_at = Column(TIMESTAMP, server_default="now()")
     created_at = Column(TIMESTAMP, server_default="now()")
-    ts_summary = Column(TSVECTOR)
-    ts_content = Column(TSVECTOR)
+    # Remove non-existent tsvector columns to match DB

@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 import uvicorn
 import logging
 from datetime import datetime
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 
 # Database
 from services.db.postgres import db_manager
@@ -61,6 +63,41 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------
+# Lifespan for Startup & Shutdown
+# ----------------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database and AI services on startup, cleanup on shutdown"""
+    try:
+        # Startup tasks
+        await db_manager.initialize()
+        async with db_manager.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("✅ Database initialized and tables created successfully")
+
+        # Load and overwrite system prompt
+        await load_and_save_system_prompt()
+        logger.info("✅ system_prompt")
+
+        # Yield control to FastAPI (application runs)
+        yield
+
+    except Exception as e:
+        logger.error(f"Startup failed: {e}")
+        raise
+
+    finally:
+        # Shutdown tasks
+        try:
+            await db_manager.close()
+            logger.info("✅ Database connections closed")
+        except Exception as e:
+            logger.error(f"Shutdown error: {e}")
+        logger.info("Application shutdown completed")
+
+
+
+# ----------------------------------------------------
 # FastAPI App
 # ----------------------------------------------------
 app = FastAPI(
@@ -68,7 +105,8 @@ app = FastAPI(
     description="AI-powered chatbot for waste management and sustainability guidance",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # AI instances are now imported from core.initializers
@@ -112,34 +150,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-# ----------------------------------------------------
-# Startup & Shutdown
-# ----------------------------------------------------
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and AI services"""
-    try:
-        await db_manager.initialize()
-        async with db_manager.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("✅ Database initialized and tables created successfully")
-
-        # 2) Load and overwrite system prompt
-        await load_and_save_system_prompt()
-        logger.info("✅ system_prompt")
-    except Exception as e:
-        logger.error(f"Startup failed: {e}")
-        raise
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup database connections"""
-    try:
-        await db_manager.close()
-        logger.info("✅ Database connections closed")
-    except Exception as e:
-        logger.error(f"Shutdown error: {e}")
-    logger.info("Application shutdown completed")
 
 # ----------------------------------------------------
 # Meta Endpoints

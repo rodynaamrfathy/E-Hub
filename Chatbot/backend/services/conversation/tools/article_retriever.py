@@ -4,7 +4,9 @@ import google.generativeai as genai
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
-from services.mcp.db_adapter import run_query
+from services.db.postgres import db_manager
+from services.repositories.article_service import ArticleService
+
 import json
 
 load_dotenv()
@@ -16,6 +18,17 @@ class article_retriever:
         self.api_key = os.getenv("GOOGLE_API_KEY_MM")
         genai.configure(api_key=self.api_key)
         self.model = "models/gemini-embedding-exp-03-07"
+        self.service = None
+
+    async def init_service(self):
+        """Initialize Article service with async DB session."""
+        self._session_ctx = db_manager.get_session()
+        self._session = await self._session_ctx.__aenter__()
+        self.service = ArticleService(self._session)
+
+    async def _close(self):
+        if hasattr(self, "_session_ctx"):
+            await self._session_ctx.__aexit__(None, None, None)
     
     def get_embeddings(self, texts):
         """Get embeddings for a list of texts."""
@@ -87,28 +100,52 @@ class article_retriever:
             })
         return results
 
-    def article_search(self,prompt):
-        rows = run_query("SELECT id, title, url, summary, embeddings FROM articles", fetch=True)
+    async def article_search(self,prompt):
+        if self.service is None:
+            await self.init_service()
 
-        parsed_embeddings, valid_rows = [], []
+        rows = await self.service.get_all_articles()
+
+        if not rows:
+            print("⚠️ No articles found")
+            return []
+        # Build embeddings on the fly from article summaries (or content)
+        texts = []
+        valid_rows = []
         for row in rows:
-            arr = self._to_float_array(row["embeddings"], expected_dim=768)
-            if arr is not None:
-                parsed_embeddings.append(arr)
+            text = row.get("summary") or row.get("content") or row.get("title")
+            if text:
+                texts.append(text)
                 valid_rows.append(row)
 
-        embeddings = np.vstack(parsed_embeddings).astype(float)
+        if not texts:
+            return []
+
+        embeddings = self.get_embeddings(texts)
+        if embeddings is None or len(embeddings) == 0:
+            return []
+
+        embeddings = np.asarray(embeddings, dtype=float)
         results = self.get_similarity(prompt, valid_rows, embeddings)
         return results
 
-    def get_references(self, prompt, max_results=5):
-        article_results = self.article_search(prompt)
+    async def get_references(self, prompt, max_results=5):
+        article_results = await self.article_search(prompt)
 
         references = []
         for art in article_results[:max_results]:
+            title = art.get("title")
+            url = art.get("url")
+            # Fallback: try to infer a URL from content if missing (very naive)
+            if not url and art.get("content"):
+                text = art.get("content")
+                start = text.find("http")
+                if start != -1:
+                    end = text.find(" ", start)
+                    url = text[start:end] if end != -1 else text[start:]
             references.append({
-                "title": art["title"],
-                "url": art["url"]
+                "title": title or "Untitled",
+                "url": url
             })
         return references
 

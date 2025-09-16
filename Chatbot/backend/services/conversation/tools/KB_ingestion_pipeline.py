@@ -1,16 +1,28 @@
 # this script is for ingesting new knowledge into our KB DB 
 import uuid
 import json
-from Chatbot.backend.services.mcp.db_adapter import run_query_params
 from Chatbot.backend.services.conversation.tools.embeddermodel import embedder
+from services.db.postgres import get_db_session
+from services.repositories.kb_service import KBContentService
 
 
 class KB_IngestionPipeline:
     def __init__(self) -> None:
         self.embedder=embedder()
+        self.get_db_session = get_db_session
+        self.kb_service  = None
 
-    def ingest_entry(self, entry):
+    async def init_service(self):
+        """Initialize KB service with async DB session."""
+        async for db in self.get_db_session():
+            self.kb_service = KBContentService(db)
+            break
+
+    async def ingest_entry(self, entry):
         """Insert or update a KB entry in the database (only if changed)."""
+        if self.kb_service is None:
+            await self.init_service()
+
         try:
             # Use existing id if provided, otherwise generate new one
             new_id = entry.get("id", str(uuid.uuid4()))
@@ -19,20 +31,17 @@ class KB_IngestionPipeline:
             content_type = entry.get("content_type", "unknown")
             title = entry.get("title", "")
             content = entry.get("content", "")
-            metadata = json.dumps(entry.get("metadata", {}))
+            metadata = entry.get("metadata", {})
             keywords = entry.get("keywords", [])
 
             # --- 🔎 Step 1: Check if entry already exists ---
-            sql_check = "SELECT title, content, metadata, keywords FROM kb_content WHERE id = %s"
-            existing = run_query_params(sql_check, params=(new_id,), fetch=True)
+            existing = await self.kb_service.get_by_id(kb_id=new_id)
 
             if existing:
-                existing_row = existing[0]
+                existing_row = existing
 
                 # Normalize stored values
-                stored_metadata = (
-                    existing_row["metadata"] if isinstance(existing_row["metadata"], str) else json.dumps(existing_row["metadata"])
-                )
+                stored_metadata = existing_row["metadata"]
                 stored_keywords = (
                     existing_row["keywords"] if isinstance(existing_row["keywords"], list) else json.loads(existing_row["keywords"])
                 )
@@ -57,24 +66,37 @@ class KB_IngestionPipeline:
             embedding = embeddings[0].tolist()
 
             # --- 💾 Step 3: Upsert (insert/update if changed) ---
-            sql = """
-                INSERT INTO kb_content (id, content_type, title, content, metadata, keywords,embedding)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO UPDATE SET
-                    content_type = EXCLUDED.content_type,
-                    title = EXCLUDED.title,
-                    content = EXCLUDED.content,
-                    metadata = EXCLUDED.metadata,
-                    keywords = EXCLUDED.keywords,
-                    embedding = EXCLUDED.embedding
-                RETURNING id;
-            """
+            # sql = """
+            #     INSERT INTO kb_content (id, content_type, title, content, metadata, keywords,embedding)
+            #     VALUES (%s, %s, %s, %s, %s, %s, %s)
+            #     ON CONFLICT (id) DO UPDATE SET
+            #         content_type = EXCLUDED.content_type,
+            #         title = EXCLUDED.title,
+            #         content = EXCLUDED.content,
+            #         metadata = EXCLUDED.metadata,
+            #         keywords = EXCLUDED.keywords,
+            #         embedding = EXCLUDED.embedding
+            #     RETURNING id;
+            # """
 
-            result = run_query_params(
-                sql,
-                params=(new_id, content_type, title, content, metadata, keywords, embedding),
-                fetch=True
-            )
+            # result = run_query_params(
+            #     sql,
+            #     params=(new_id, content_type, title, content, metadata, keywords, embedding),
+            #     fetch=True
+            # )
+
+            upsert_data = {
+                "id":  new_id,
+                "content_type": content_type,
+                "title": title,
+                "content": content,
+                "metadata": metadata,
+                "keywords": keywords,
+                "embedding": embedding,
+            }
+
+            result = await self.kb_service.upsert_kb_entry(upsert_data)
+
 
             if result:
                 if existing:

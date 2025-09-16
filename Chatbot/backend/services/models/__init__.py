@@ -4,5 +4,6 @@ from .images import Image
 from .image_classification import ImageClassification
 from .base import Base
 from .article import Article
+from .kb_content import KBContent
 
-__all__ = ["Base", "Conversation", "Message", "Image", "ImageClassification", "Article"]
+__all__ = ["Base", "Conversation", "Message", "Image", "ImageClassification", "Article", "KBContent"]
