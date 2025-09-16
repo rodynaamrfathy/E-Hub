@@ -1,7 +1,7 @@
 # this script is for ingesting new knowledge into our KB DB 
 import uuid
 import json
-from Chatbot.backend.services.conversation.tools.embeddermodel import embedder
+from .embeddermodel import embedder
 from services.db.postgres import get_db_session
 from services.repositories.kb_service import KBContentService
 

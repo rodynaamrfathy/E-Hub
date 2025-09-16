@@ -13,6 +13,8 @@ from services.models import Base
 
 # Routes 
 from api.chat import router as chat_router
+from api.kb_router import router as kb_router
+
 
 from langsmith.run_helpers import traceable, get_current_run_tree
 from config import LANGSMITH_API_KEY
@@ -206,6 +208,8 @@ async def submit_feedback(feedback: dict):
 # Routers
 # ----------------------------------------------------
 app.include_router(chat_router, prefix="/chat", tags=["Chat"])
+app.include_router(kb_router, prefix="/kb", tags=["KB"])
+
 #app.include_router(upload_router, prefix="/api/upload", tags=["Upload"])
 
 # ----------------------------------------------------
