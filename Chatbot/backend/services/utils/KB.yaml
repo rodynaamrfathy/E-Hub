@@ -1,136 +1,564 @@
-company:
-  name: Environ Adapt
-  tagline: Pioneering waste management through clean technology and circular solutions
-  about: |
-    Environ Adapt is a leading waste management company that combines cutting-edge technology with a strong commitment to environmental sustainability and improved working conditions in the informal sector. 
-    It drives the digital transformation of waste management in Egypt and beyond, serving brand owners, governments, waste companies, and communities.
+kb_entries:
+  # Company Overview
+  - id: company_001
+    content_type: company
+    title: "Environ Adapt - Waste Management Company"
+    content: |
+      Environ Adapt is a leading waste management company that combines cutting-edge technology with a strong commitment to environmental sustainability and improved working conditions in the informal sector. Founded in 2018, it drives the digital transformation of waste management in Egypt and beyond, serving brand owners, governments, waste companies, and communities. The company pioneers waste management through clean technology and circular solutions.
+    metadata:
+      name: "Environ Adapt"
+      tagline: "Pioneering waste management through clean technology and circular solutions"
+      founded: 2018
+      location: "Egypt"
+      industry: "waste_management"
+      focus_areas: ["sustainability", "technology", "circular_economy", "informal_sector"]
+      target_sectors: ["brand_owners", "governments", "waste_companies", "communities"]
+    keywords:
+      - "environ adapt"
+      - "waste management"
+      - "sustainability"
+      - "egypt"
+      - "circular economy"
+      - "technology"
+      - "environmental"
+      - "digital transformation"
+    parent_id: null
 
-solutions:
-  - name: Dawar
-    type: Community & Circular Economy Platform
-    description: |
-      Dawar is Environ Adapt’s app for circular solutions. It empowers residents, informal waste pickers, recyclers, and brand owners to participate in the circular economy.
-    features:
-      - title: Report Street Waste
-        description: Snap a photo of litter; Dawar notifies the responsible collector and shares an "after" photo when cleaned.
-      - title: Request Sorted Waste Pickup
-        description: Schedule pickup of recyclable materials from homes or businesses.
-      - title: Sustainability News & Awareness
-        description: Stay informed with eco-friendly tips, news, and educational content via Dawar News and the Sustainability Hub.
-      - title: Dawar Marketplace
-        description: Buy and sell high-quality recyclable materials such as PET flakes, PET pellets, and cardboard.
-        materials:
-          - PET Flakes
-          - PET Pellets
-          - Cardboard
-        location: Egypt
-        call_to_action: Contact us if you want to buy or sell other waste materials.
+  # Solutions
+  - id: solution_001
+    content_type: solution
+    title: "Dawar - Community & Circular Economy Platform"
+    content: |
+      Dawar is Environ Adapt's mobile app for circular solutions that empowers residents, informal waste pickers, recyclers, and brand owners to participate in the circular economy. The platform serves as a comprehensive digital solution connecting various stakeholders in the waste management ecosystem. Target users include households, informal waste pickers, collection centers, haulers, recycling facilities, brand owners, and the general public. The Dawar Community includes anyone contributing to the circular economy - from people who sort waste at home to waste pickers and designers repurposing trash into art, all connected through sustainable action.
+    metadata:
+      solution_name: "Dawar"
+      solution_type: "Community & Circular Economy Platform"
+      platform_type: "mobile_app"
+      target_users: 
+        - "Households"
+        - "Informal Waste Pickers"
+        - "Collection Centers"
+        - "Haulers"
+        - "Recycling Facilities"
+        - "Brand Owners"
+        - "General Public"
+      features_count: 4
+      geographic_focus: "Egypt"
+      community_focus: "circular_economy_participants"
+    keywords:
+      - "dawar"
+      - "mobile app"
+      - "circular economy"
+      - "waste collection"
+      - "community platform"
+      - "recycling"
+      - "waste pickers"
+      - "stakeholders"
+    parent_id: company_001
 
-    target_users:
-      - Households
-      - Informal Waste Pickers
-      - Collection Centers
-      - Haulers
-      - Recycling Facilities
-      - Brand Owners
-      - General Public
+  - id: solution_002
+    content_type: solution
+    title: "Adapt - Waste Management Operations Platform"
+    content: |
+      Adapt is a smart digital solution for waste management companies to streamline operations, optimize resources, and enhance efficiency. The platform provides comprehensive operational management tools for waste collection companies, municipalities, and government contractors. It focuses on digitizing and optimizing waste management operations through advanced technology solutions.
+    metadata:
+      solution_name: "Adapt"
+      solution_type: "Waste Management Operations Platform"
+      platform_type: "operations_management"
+      target_users:
+        - "Waste Collection Companies"
+        - "Municipalities"
+        - "Government Contractors"
+      features_count: 4
+      focus_area: "operational_efficiency"
+    keywords:
+      - "adapt"
+      - "operations platform"
+      - "waste management"
+      - "efficiency"
+      - "municipalities"
+      - "fleet management"
+      - "digital solution"
+    parent_id: company_001
 
-    community: |
-      The Dawar Community includes anyone contributing to the circular economy — from people who sort waste at home to waste pickers and designers repurposing trash into art. We're all connected through sustainable action.
+  # Dawar Features
+  - id: feature_001
+    content_type: feature
+    title: "Report Street Waste"
+    content: |
+      Report Street Waste feature allows users to snap a photo of litter, after which Dawar notifies the responsible collector and shares an "after" photo when the waste is cleaned. This feature enables community-driven waste reporting and creates accountability in the cleaning process.
+    metadata:
+      parent_solution: "Dawar"
+      feature_type: "waste_reporting"
+      user_action: "photo_capture"
+      workflow: ["photo_capture", "notification", "cleanup", "confirmation"]
+      community_engagement: true
+    keywords:
+      - "street waste"
+      - "waste reporting"
+      - "photo"
+      - "litter"
+      - "community"
+      - "cleanup"
+      - "notification"
+    parent_id: solution_001
 
-  - name: Adapt
-    type: Waste Management Operations Platform
-    description: |
-      A smart digital solution for waste management companies to streamline operations, optimize resources, and enhance efficiency.
-    features:
-      - title: Smart Waste Bin Management
-        description: Monitor bin locations and fill levels in real time via a centralized dashboard.
-      - title: Fleet Management
-        description: Optimize vehicle routes and track fleet performance for maximum efficiency.
-      - title: Waste Task Force Management
-        description: Assign tasks, track completion, and take attendance using face recognition technology.
-      - title: Waste Stream Insights
-        description: Leverage historical and real-time data to gain actionable insights and make data-driven decisions.
+  - id: feature_002
+    content_type: feature
+    title: "Request Sorted Waste Pickup"
+    content: |
+      Request Sorted Waste Pickup feature allows users to schedule pickup of recyclable materials from homes or businesses. This service facilitates proper waste sorting and collection, supporting the circular economy by ensuring recyclable materials reach appropriate processing facilities.
+    metadata:
+      parent_solution: "Dawar"
+      feature_type: "pickup_scheduling"
+      service_type: "sorted_waste_collection"
+      target_materials: "recyclable_materials"
+      service_locations: ["homes", "businesses"]
+    keywords:
+      - "waste pickup"
+      - "scheduled collection"
+      - "recyclable materials"
+      - "sorting"
+      - "businesses"
+      - "homes"
+      - "circular economy"
+    parent_id: solution_001
 
-    target_users:
-      - Waste Collection Companies
-      - Municipalities
-      - Government Contractors
+  - id: feature_003
+    content_type: feature
+    title: "Sustainability News & Awareness"
+    content: |
+      Sustainability News & Awareness feature keeps users informed with eco-friendly tips, news, and educational content delivered through Dawar News and the Sustainability Hub. This feature promotes environmental awareness and education within the community.
+    metadata:
+      parent_solution: "Dawar"
+      feature_type: "content_delivery"
+      content_types: ["eco_tips", "news", "educational_content"]
+      delivery_channels: ["Dawar News", "Sustainability Hub"]
+      purpose: "environmental_education"
+    keywords:
+      - "sustainability news"
+      - "environmental awareness"
+      - "eco-friendly tips"
+      - "education"
+      - "sustainability hub"
+      - "content"
+    parent_id: solution_001
 
-dawar_solutions_for_brands:
-  - title: Waste Traceability
-    description: |
-      Digital tracking of post-consumer waste (e.g., PET, HDPE, UBC) from collection to recycling. Ensures compliance with Extended Producer Responsibility (EPR) mandates.
-    clients:
-      - The Coca-Cola Company (World Without Waste program)
-      - PepsiCo
-      - Unilever
-      - Tetra Pak (UBC pilot)
-      - Nestlé Waters
-      - Al Ahram Beverages
+  - id: feature_004
+    content_type: feature
+    title: "Dawar Marketplace"
+    content: |
+      Dawar Marketplace enables users to buy and sell high-quality recyclable materials including PET flakes, PET pellets, and cardboard. Currently available in Egypt, the marketplace connects waste generators with recyclers to create a functional circular economy. Users can contact Environ Adapt to buy or sell other waste materials beyond the standard offerings.
+    metadata:
+      parent_solution: "Dawar"
+      feature_type: "marketplace"
+      transaction_types: ["buy", "sell"]
+      materials:
+        - "PET Flakes"
+        - "PET Pellets"
+        - "Cardboard"
+      quality_level: "high-quality"
+      location: "Egypt"
+      additional_services: "custom_materials_on_request"
+      call_to_action: "Contact us if you want to buy or sell other waste materials"
+    keywords:
+      - "marketplace"
+      - "pet flakes"
+      - "pet pellets"
+      - "cardboard"
+      - "buy"
+      - "sell"
+      - "recyclable materials"
+      - "trading"
+      - "egypt"
+      - "circular economy"
+    parent_id: solution_001
 
-  - title: Ethical Sourcing
-    description: |
-      Monitors health, safety, and working conditions in the informal waste sector. Provides insights aligned with international labor standards and UN SDGs.
-    developed_with: Fair Labor Organization
+  # Adapt Features
+  - id: feature_005
+    content_type: feature
+    title: "Smart Waste Bin Management"
+    content: |
+      Smart Waste Bin Management feature allows waste management companies to monitor bin locations and fill levels in real time through a centralized dashboard. This technology enables proactive waste collection and optimizes collection routes based on actual bin capacity.
+    metadata:
+      parent_solution: "Adapt"
+      feature_type: "bin_monitoring"
+      technology: "real_time_monitoring"
+      data_types: ["location", "fill_levels"]
+      interface: "centralized_dashboard"
+    keywords:
+      - "smart bins"
+      - "waste bins"
+      - "real-time monitoring"
+      - "fill levels"
+      - "dashboard"
+      - "bin management"
+    parent_id: solution_002
 
-  - title: Waste Collection Development Projects
-    description: |
-      Custom projects designed to meet sustainability targets, integrate local communities, and ensure ethical compliance.
+  - id: feature_006
+    content_type: feature
+    title: "Fleet Management"
+    content: |
+      Fleet Management feature optimizes vehicle routes and tracks fleet performance for maximum efficiency. This system helps waste collection companies reduce operational costs and improve service delivery through intelligent route planning and vehicle monitoring.
+    metadata:
+      parent_solution: "Adapt"
+      feature_type: "fleet_optimization"
+      capabilities: ["route_optimization", "performance_tracking"]
+      benefits: ["cost_reduction", "efficiency_improvement"]
+      target_vehicles: "waste_collection_trucks"
+    keywords:
+      - "fleet management"
+      - "route optimization"
+      - "vehicle tracking"
+      - "efficiency"
+      - "performance"
+      - "waste collection"
+    parent_id: solution_002
 
-  - title: Environmental Awareness
-    description: |
-      Training sessions for employees and factory workers (in Arabic and English). Content delivery through Dawar News and the Sustainability Hub.
-    past_engagements:
-      - Informa Markets (Automotive Exhibit 2019)
-      - Unilever (employee awareness programs)
+  - id: feature_007
+    content_type: feature
+    title: "Waste Task Force Management"
+    content: |
+      Waste Task Force Management feature enables companies to assign tasks, track completion, and take attendance using face recognition technology. This advanced system ensures accountability and efficient workforce management in waste collection operations.
+    metadata:
+      parent_solution: "Adapt"
+      feature_type: "workforce_management"
+      capabilities: ["task_assignment", "completion_tracking", "attendance_monitoring"]
+      technology: "face_recognition"
+      purpose: "workforce_accountability"
+    keywords:
+      - "task force management"
+      - "face recognition"
+      - "attendance"
+      - "task assignment"
+      - "workforce"
+      - "accountability"
+    parent_id: solution_002
 
-partnerships:
-  brand_owners:
-    - The Coca-Cola Company
-    - PepsiCo
-    - Unilever
-    - Tetra Pak
-    - Nestlé Waters
-    - Al Ahram Beverages
+  - id: feature_008
+    content_type: feature
+    title: "Waste Stream Insights"
+    content: |
+      Waste Stream Insights feature leverages historical and real-time data to provide actionable insights and support data-driven decision making. This analytics platform helps waste management companies understand patterns, optimize operations, and improve service delivery.
+    metadata:
+      parent_solution: "Adapt"
+      feature_type: "analytics_platform"
+      data_sources: ["historical_data", "real_time_data"]
+      output: "actionable_insights"
+      purpose: "data_driven_decisions"
+    keywords:
+      - "waste stream insights"
+      - "analytics"
+      - "data insights"
+      - "historical data"
+      - "real-time data"
+      - "decision making"
+    parent_id: solution_002
 
-  ngos:
-    - HEPCA (Reducing ocean plastics in the Red Sea)
-    - Fair Labor Organization (Ethical sourcing framework)
-    - Banlastic (Beach waste to energy in Alexandria)
+  # Brand Services
+  - id: service_001
+    content_type: brand_service
+    title: "Waste Traceability"
+    content: |
+      Waste Traceability service provides digital tracking of post-consumer waste including PET, HDPE, and UBC from collection to recycling. This service ensures compliance with Extended Producer Responsibility (EPR) mandates and offers complete transparency in the waste management process. Current clients include major global brands implementing sustainability programs.
+    metadata:
+      service_type: "waste_traceability"
+      waste_types: ["PET", "HDPE", "UBC"]
+      process_coverage: ["collection", "sorting", "recycling"]
+      compliance: ["EPR", "Law 202/2020"]
+      tracking_method: "digital"
+      clients:
+        - "The Coca-Cola Company (World Without Waste program)"
+        - "PepsiCo"
+        - "Unilever"
+        - "Tetra Pak (UBC pilot)"
+        - "Nestlé Waters"
+        - "Al Ahram Beverages"
+    keywords:
+      - "waste traceability"
+      - "pet"
+      - "hdpe"
+      - "ubc"
+      - "epr"
+      - "digital tracking"
+      - "compliance"
+      - "recycling"
+      - "coca cola"
+      - "pepsi"
+      - "unilever"
+    parent_id: null
 
-  government_institutions:
-    - Ministry of Environment (Egypt) – Digital monitoring system pilot in Maadi & Tora (with GIZ)
-    - Ministry of Local Development – Performance monitoring of Cairo’s 2021 waste contracts (East & West)
-    - Waste Management Regulatory Authority (WMRA) – EPR and Law 202/2020 alignment
-    - GIZ – Funded capacity-building programs for sustainable waste management
+  - id: service_002
+    content_type: brand_service
+    title: "Ethical Sourcing"
+    content: |
+      Ethical Sourcing service monitors health, safety, and working conditions in the informal waste sector. This service provides insights aligned with international labor standards and UN Sustainable Development Goals, developed in partnership with Fair Labor Organization.
+    metadata:
+      service_type: "ethical_monitoring"
+      focus_areas: ["health", "safety", "working_conditions"]
+      sector: "informal_waste"
+      standards: ["international_labor_standards", "UN_SDGs"]
+      developed_with: "Fair Labor Organization"
+      purpose: "social_compliance"
+    keywords:
+      - "ethical sourcing"
+      - "informal waste sector"
+      - "working conditions"
+      - "labor standards"
+      - "un sdgs"
+      - "fair labor"
+      - "health safety"
+    parent_id: null
 
-  events_and_partners:
-    - Informa Markets – Sustainability consultancy for Automotive Exhibit (2019)
-    - Tri Factory – Official waste management partner for Pyramids Marathon (zero waste at heritage sites)
+  - id: service_003
+    content_type: brand_service
+    title: "Waste Collection Development Projects"
+    content: |
+      Waste Collection Development Projects are custom projects designed to meet sustainability targets, integrate local communities, and ensure ethical compliance. These tailored solutions help brands achieve their environmental and social responsibility goals.
+    metadata:
+      service_type: "custom_development"
+      objectives: ["sustainability_targets", "community_integration", "ethical_compliance"]
+      approach: "tailored_solutions"
+      target_outcomes: ["environmental_goals", "social_responsibility"]
+    keywords:
+      - "development projects"
+      - "sustainability targets"
+      - "community integration"
+      - "ethical compliance"
+      - "custom projects"
+    parent_id: null
 
-history:
-  launch_year: 2018
-  origin: |
-    Dawar started as a beta test for a photo-sharing feature. A "before and after" post about cleaning street waste went viral on Facebook, resulting in 20,000 downloads in two weeks and ranking #1 in the Productivity category in Egypt.
-  concept: |
-    Residents snap photos of street waste → app sends report to local collector → collector cleans and uploads "after" photo → user receives confirmation.
-  recognition: Featured in a leading Japanese newspaper for innovative urban waste engagement.
+  - id: service_004
+    content_type: brand_service
+    title: "Environmental Awareness"
+    content: |
+      Environmental Awareness service provides training sessions for employees and factory workers in both Arabic and English. Content is delivered through Dawar News and the Sustainability Hub, with past engagements including Informa Markets Automotive Exhibit 2019 and Unilever employee awareness programs.
+    metadata:
+      service_type: "training_awareness"
+      target_audience: ["employees", "factory_workers"]
+      languages: ["Arabic", "English"]
+      delivery_channels: ["Dawar News", "Sustainability Hub"]
+      past_engagements:
+        - "Informa Markets (Automotive Exhibit 2019)"
+        - "Unilever (employee awareness programs)"
+    keywords:
+      - "environmental awareness"
+      - "training"
+      - "employee programs"
+      - "arabic"
+      - "english"
+      - "sustainability hub"
+      - "informa markets"
+      - "unilever"
+    parent_id: null
 
-certifications:
-  - standard: ISO 9001
-    scope: Quality Management Systems
-    description: |
-      Ensures consistent service quality, customer satisfaction, and continuous improvement in all operations.
+  # Partnerships
+  - id: partnership_001
+    content_type: partnership
+    title: "Brand Owner Partnerships"
+    content: |
+      Environ Adapt maintains strategic partnerships with major global brand owners including The Coca-Cola Company, PepsiCo, Unilever, Tetra Pak, Nestlé Waters, and Al Ahram Beverages. These partnerships focus on implementing comprehensive waste management solutions, sustainability programs, and Extended Producer Responsibility compliance.
+    metadata:
+      partnership_type: "brand_owners"
+      partners:
+        - "The Coca-Cola Company"
+        - "PepsiCo"
+        - "Unilever"
+        - "Tetra Pak"
+        - "Nestlé Waters"
+        - "Al Ahram Beverages"
+      focus_areas: ["waste_management", "sustainability", "EPR_compliance"]
+      partnership_count: 6
+    keywords:
+      - "brand partnerships"
+      - "coca cola"
+      - "pepsi"
+      - "unilever"
+      - "tetra pak"
+      - "nestle"
+      - "al ahram"
+      - "brand owners"
+      - "sustainability"
+    parent_id: null
 
-  - standard: ISO 27001
-    scope: Information Security Management
-    description: |
-      Protects data integrity, privacy, and security across digital platforms.
+  - id: partnership_002
+    content_type: partnership
+    title: "NGO Partnerships"
+    content: |
+      Environ Adapt collaborates with environmental and social NGOs including HEPCA for reducing ocean plastics in the Red Sea, Fair Labor Organization for ethical sourcing frameworks, and Banlastic for beach waste to energy projects in Alexandria. These partnerships strengthen environmental and social impact initiatives.
+    metadata:
+      partnership_type: "ngos"
+      partners:
+        - "HEPCA (Reducing ocean plastics in the Red Sea)"
+        - "Fair Labor Organization (Ethical sourcing framework)"
+        - "Banlastic (Beach waste to energy in Alexandria)"
+      focus_areas: ["ocean_plastic_reduction", "ethical_sourcing", "waste_to_energy"]
+      geographic_focus: ["Red Sea", "Alexandria"]
+    keywords:
+      - "ngo partnerships"
+      - "hepca"
+      - "fair labor organization"
+      - "banlastic"
+      - "ocean plastics"
+      - "ethical sourcing"
+      - "alexandria"
+      - "red sea"
+    parent_id: null
 
-  - readiness: Blockchain-Compliant
-    description: |
-      Systems are prepared for blockchain integration to ensure transparent, secure, and tamper-proof waste traceability.
+  - id: partnership_003
+    content_type: partnership
+    title: "Government Institution Partnerships"
+    content: |
+      Environ Adapt works with Egyptian government institutions including the Ministry of Environment for digital monitoring system pilots in Maadi & Tora with GIZ, Ministry of Local Development for performance monitoring of Cairo's 2021 waste contracts, Waste Management Regulatory Authority (WMRA) for EPR and Law 202/2020 alignment, and GIZ for funded capacity-building programs in sustainable waste management.
+    metadata:
+      partnership_type: "government_institutions"
+      partners:
+        - "Ministry of Environment (Egypt) - Digital monitoring system pilot in Maadi & Tora (with GIZ)"
+        - "Ministry of Local Development - Performance monitoring of Cairo's 2021 waste contracts (East & West)"
+        - "Waste Management Regulatory Authority (WMRA) - EPR and Law 202/2020 alignment"
+        - "GIZ - Funded capacity-building programs for sustainable waste management"
+      focus_areas: ["digital_monitoring", "performance_monitoring", "regulatory_compliance", "capacity_building"]
+      locations: ["Maadi", "Tora", "Cairo"]
+    keywords:
+      - "government partnerships"
+      - "ministry of environment"
+      - "ministry local development"
+      - "wmra"
+      - "giz"
+      - "egypt"
+      - "cairo"
+      - "epr compliance"
+    parent_id: null
 
-call_to_action: |
-  Join the Dawar Community today — whether you're sorting waste at home, collecting recyclables, or building a sustainable business. Download the Dawar app and be part of the circular economy.
+  - id: partnership_004
+    content_type: partnership
+    title: "Event and Strategic Partnerships"
+    content: |
+      Environ Adapt provides sustainability consultancy and waste management services for major events and initiatives. Key partnerships include sustainability consultancy for Informa Markets Automotive Exhibit in 2019 and serving as the official waste management partner for the Pyramids Marathon, achieving zero waste at heritage sites.
+    metadata:
+      partnership_type: "events_and_partners"
+      partners:
+        - "Informa Markets - Sustainability consultancy for Automotive Exhibit (2019)"
+        - "Tri Factory - Official waste management partner for Pyramids Marathon (zero waste at heritage sites)"
+      service_types: ["sustainability_consultancy", "event_waste_management"]
+      achievements: ["zero_waste_events", "heritage_site_protection"]
+    keywords:
+      - "event partnerships"
+      - "informa markets"
+      - "tri factory"
+      - "pyramids marathon"
+      - "zero waste"
+      - "heritage sites"
+      - "automotive exhibit"
+    parent_id: null
+
+  # Company History
+  - id: history_001
+    content_type: history
+    title: "Company History and Origins"
+    content: |
+      Environ Adapt was founded in 2018. Dawar started as a beta test for a photo-sharing feature when a "before and after" post about cleaning street waste went viral on Facebook, resulting in 20,000 downloads in two weeks and ranking #1 in the Productivity category in Egypt. The core concept involves residents snapping photos of street waste, the app sending reports to local collectors, collectors cleaning and uploading "after" photos, and users receiving confirmation. The company gained recognition when it was featured in a leading Japanese newspaper for innovative urban waste engagement.
+    metadata:
+      launch_year: 2018
+      origin_story: "viral_facebook_post"
+      initial_downloads: 20000
+      timeframe: "two_weeks"
+      ranking_achievement: "#1_productivity_egypt"
+      concept_workflow: ["photo_capture", "report_generation", "collector_notification", "cleanup", "confirmation"]
+      international_recognition: "Japanese_newspaper_feature"
+      innovation_focus: "urban_waste_engagement"
+    keywords:
+      - "company history"
+      - "founded 2018"
+      - "viral"
+      - "facebook"
+      - "20000 downloads"
+      - "productivity app"
+      - "egypt"
+      - "japanese newspaper"
+      - "innovation"
+    parent_id: null
+
+  # Certifications
+  - id: certification_001
+    content_type: certification
+    title: "ISO 9001 Quality Management Systems"
+    content: |
+      Environ Adapt holds ISO 9001 certification for Quality Management Systems, which ensures consistent service quality, customer satisfaction, and continuous improvement in all operations. This certification demonstrates the company's commitment to maintaining high standards in service delivery and operational excellence.
+    metadata:
+      standard: "ISO 9001"
+      scope: "Quality Management Systems"
+      certification_type: "quality_management"
+      benefits: ["consistent_service_quality", "customer_satisfaction", "continuous_improvement"]
+      operational_impact: "service_delivery_excellence"
+    keywords:
+      - "iso 9001"
+      - "quality management"
+      - "certification"
+      - "service quality"
+      - "customer satisfaction"
+      - "continuous improvement"
+    parent_id: null
+
+  - id: certification_002
+    content_type: certification
+    title: "ISO 27001 Information Security Management"
+    content: |
+      Environ Adapt maintains ISO 27001 certification for Information Security Management, which protects data integrity, privacy, and security across all digital platforms. This certification ensures that client data and operational information are handled with the highest security standards.
+    metadata:
+      standard: "ISO 27001"
+      scope: "Information Security Management"
+      certification_type: "information_security"
+      protection_areas: ["data_integrity", "privacy", "security"]
+      coverage: "digital_platforms"
+      client_benefit: "secure_data_handling"
+    keywords:
+      - "iso 27001"
+      - "information security"
+      - "data protection"
+      - "privacy"
+      - "digital security"
+      - "certification"
+    parent_id: null
+
+  - id: certification_003
+    content_type: certification
+    title: "Blockchain-Compliant Systems"
+    content: |
+      Environ Adapt's systems are prepared for blockchain integration to ensure transparent, secure, and tamper-proof waste traceability. This blockchain readiness positions the company at the forefront of next-generation waste tracking technology, providing enhanced transparency and trust in waste management processes.
+    metadata:
+      readiness_type: "Blockchain-Compliant"
+      technology_focus: "blockchain_integration"
+      benefits: ["transparency", "security", "tamper_proof_tracking"]
+      application_area: "waste_traceability"
+      strategic_advantage: "next_generation_technology"
+    keywords:
+      - "blockchain"
+      - "blockchain compliant"
+      - "transparent tracking"
+      - "tamper proof"
+      - "waste traceability"
+      - "technology readiness"
+    parent_id: null
+
+  # Call to Action
+  - id: cta_001
+    content_type: call_to_action
+    title: "Join the Dawar Community"
+    content: |
+      Join the Dawar Community today - whether you're sorting waste at home, collecting recyclables, or building a sustainable business. Download the Dawar app and be part of the circular economy. Everyone can contribute to environmental sustainability through the Dawar platform.
+    metadata:
+      action_type: "community_participation"
+      target_audience: ["home_waste_sorters", "recyclable_collectors", "sustainable_businesses"]
+      platform: "dawar_app"
+      call_to_action: "download_app"
+      value_proposition: "circular_economy_participation"
+    keywords:
+      - "join community"
+      - "dawar app"
+      - "download"
+      - "circular economy"
+      - "sustainable business"
+      - "waste sorting"
+      - "recyclables"
+    parent_id: null
