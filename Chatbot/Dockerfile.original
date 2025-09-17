@@ -1,0 +1,56 @@
+# syntax=docker/dockerfile:1.7
+
+# ---------- Build Stage ----------
+FROM public.ecr.aws/lambda/python:3.11 AS builder
+
+# Set environment variables for Python optimization
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install build dependencies
+RUN yum update -y && \
+    yum install -y gcc gcc-c++ python3-devel && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+# Copy requirements first for better Docker layer caching
+COPY requirements.txt* pyproject.toml* ./
+
+# Install Python dependencies in a virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install dependencies with size optimizations
+RUN pip install --upgrade pip && \
+    pip install --only-binary=all numpy==1.24.4 && \
+    pip install -r requirements.txt && \
+    # Remove unnecessary files to reduce size
+    find /opt/venv -name "*.pyc" -delete && \
+    find /opt/venv -name "*.pyo" -delete && \
+    find /opt/venv -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# ---------- Runtime Stage ----------
+FROM public.ecr.aws/lambda/python:3.11
+
+# Set environment variables for Python optimization
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+# Copy only the virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy application code
+COPY backend/ ${LAMBDA_TASK_ROOT}/
+
+# Set production environment variables
+ENV ENVIRONMENT=production
+ENV PYTHONPATH="${LAMBDA_TASK_ROOT}:${PYTHONPATH}"
+
+# Set the Lambda handler (now using our production-ready handler)
+CMD ["lambda_function.lambda_handler"]
+    

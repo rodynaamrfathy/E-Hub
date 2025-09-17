@@ -1,0 +1,78 @@
+# syntax=docker/dockerfile:1.7
+
+# Development Dockerfile - Optimized for local development with hot reload and debugging
+# This Dockerfile includes development tools and is designed for fast iteration
+
+FROM python:3.13-slim
+
+# Set environment variables for development
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    ENVIRONMENT=development
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies including development tools
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    python3-dev \
+    curl \
+    git \
+    vim \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python development dependencies
+RUN pip install --upgrade pip
+
+# Copy requirements files
+COPY requirements.txt* pyproject.toml* ./
+
+# Install Python dependencies (including development packages)
+RUN pip install -r requirements.txt
+
+# Install additional required packages that might not be in requirements.txt
+RUN pip install python-multipart greenlet
+
+# Install additional development tools
+RUN pip install \
+    pytest==7.4.3 \
+    pytest-asyncio==0.21.1 \
+    black==23.11.0 \
+    flake8==6.1.0 \
+    mypy==1.7.1 \
+    ipython==8.17.2 \
+    jupyter==1.0.0 \
+    watchdog[watchmedo]==3.0.0 \
+    debugpy==1.8.0
+
+# Create non-root user for development
+RUN useradd --create-home --shell /bin/bash dev
+USER dev
+
+# Set work directory for the dev user
+WORKDIR /app
+
+# Copy application code (will be overridden by volume mount in docker-compose)
+COPY --chown=dev:dev backend/ ./backend/
+
+# Create directories for development
+RUN mkdir -p /home/dev/.cache/pip \
+    && mkdir -p /home/dev/.local/share/jupyter
+
+# Expose port for FastAPI development server
+EXPOSE 8000
+
+# Expose port for Jupyter notebook (optional)
+EXPOSE 8888
+
+# Expose port for debugger
+EXPOSE 5678
+
+# Development command with hot reload
+WORKDIR /app/backend
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "."]

@@ -78,7 +78,7 @@ class article_retriever:
             return None
 
         
-    def get_similarity(self, query, rows, embeddings, top_k=3, threshold=0.70):
+    def get_similarity(self, query, rows, embeddings, top_k=3, threshold=0.90):
         """Return top-k similar articles with metadata and query prompt."""
         query_emb = self.get_embeddings([query]) 
         query_emb = np.array(query_emb, dtype=float).reshape(1, -1)
