@@ -4,7 +4,11 @@ import re
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from config import DATABASE_URL
+from dotenv import load_dotenv
+
+load_dotenv()
+
+db_url=os.getenv("DATABASE_URL")
 
 def clean_asyncpg_url(db_url: str) -> str:
     """Convert to asyncpg URL and strip psycopg2-only params."""
@@ -28,7 +32,7 @@ class DatabaseManager:
         self.async_session_factory = None
         
     async def initialize(self):
-        database_url = DATABASE_URL
+        database_url = db_url
         if not database_url:
             raise ValueError("DATABASE_URL environment variable is not set")
         

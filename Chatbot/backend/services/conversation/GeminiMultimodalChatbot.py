@@ -14,12 +14,16 @@ import yaml
 from rapidfuzz import fuzz
 import json
 import base64
+from dotenv import load_dotenv
 import uuid
 import io
 import asyncio
 from PIL import Image
 from services.conversation.tools.article_retriever import article_retriever
 from services.conversation.tools.kb_rag import kb_retriever
+
+load_dotenv()
+EXA_API = os.getenv("EXA_API")
 
 class GeminiMultimodalChatbot:
     """Multimodal chatbot with history awareness."""
@@ -28,7 +32,7 @@ class GeminiMultimodalChatbot:
         self.session_id = session_id or str(uuid.uuid4())
         self.model_name = CHATBOT_MODEL
         self.max_history = MAX_HISTORY
-        self.exa_api= "25a0ccbd-511a-4f89-a134-8fd3dcc4dc68"
+        self.exa_api=EXA_API
         self.article_retriever= article_retriever()
         self.kb_retriever=kb_retriever()
 

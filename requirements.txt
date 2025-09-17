@@ -7,7 +7,7 @@ langchain-huggingface
 tqdm
 flask
 fuzzywuzzy
-sqlalchemy
+sqlalchemy  
 dotenv
 asyncpg
 requests
