@@ -39,29 +39,6 @@ services:
       - chatbot-network
     restart: unless-stopped
 
-  # PostgreSQL Database
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: chatbot-postgres
-    environment:
-      - POSTGRES_DB=chatbot_db
-      - POSTGRES_USER=chatbot_user
-      - POSTGRES_PASSWORD=chatbot_pass
-      - POSTGRES_HOST_AUTH_METHOD=trust
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    networks:
-      - chatbot-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatbot_user -d chatbot_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Redis Cache
   redis:
     image: redis:7-alpine
