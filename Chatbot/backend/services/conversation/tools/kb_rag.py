@@ -1,10 +1,10 @@
 from operator import imod
-from services.conversation.tools.embeddermodel import embedder
-from services.db.postgres import db_manager
+from backend.services.conversation.tools.embeddermodel import embedder
+from backend.services.db.postgres import db_manager
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import json
-from services.repositories.kb_service import KBContentService
+from backend.services.repositories.kb_service import KBContentService
 
 class kb_retriever:
     def __init__(self) :

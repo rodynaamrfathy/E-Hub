@@ -7,8 +7,8 @@ from typing import AsyncGenerator, List, Optional
 import logging
 import tempfile
 import os
-from services.db.postgres import get_db_session
-from services.dto import (
+from backend.services.db.postgres import get_db_session
+from backend.services.dto import (
     ConversationCreateDTO,
     ConversationResponseDTO,
     ConversationListDTO,
@@ -16,11 +16,11 @@ from services.dto import (
     MessageResponseDTO,
     MessageHistoryDTO,
 )
-from services.repositories.conversation_service import ConversationService
-from services.repositories.message_service import MessageService
-from services.repositories.history_service import get_conversation_history
-from services.repositories.images_service import ImageService
-from services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
+from backend.services.repositories.conversation_service import ConversationService
+from backend.services.repositories.message_service import MessageService
+from backend.services.repositories.history_service import get_conversation_history
+from backend.services.repositories.images_service import ImageService
+from backend.services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
 import base64
 
 

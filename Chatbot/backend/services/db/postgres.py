@@ -55,7 +55,7 @@ class DatabaseManager:
 
     # goes through all ORM classes that inherit from Base
     async def create_tables(self):
-        from services.models import Base  
+        from backend.services.models import Base  
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             

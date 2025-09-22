@@ -41,8 +41,8 @@ CHATBOT_MODEL = os.getenv("CHATBOT_MODEL", "gemini-2.5-pro")
 MAX_HISTORY = int(os.getenv("MAX_HISTORY", "50"))
 
 # Database Configuration with validation
-DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("NEON_DATABASE_URL")
-DATABASE_URL_mcp_test = os.getenv("DATABASE_URL_mcp_test") or os.getenv("NEON_DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL") 
+DATABASE_URL_mcp_test = os.getenv("DATABASE_URL_mcp_test") 
 
 if IS_PRODUCTION and not DATABASE_URL:
     logger.error("❌ DATABASE_URL is required in production")

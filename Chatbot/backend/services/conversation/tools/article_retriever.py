@@ -4,8 +4,8 @@ import google.generativeai as genai
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
-from services.db.postgres import db_manager
-from services.repositories.article_service import ArticleService
+from backend.services.db.postgres import db_manager
+from backend.services.repositories.article_service import ArticleService
 
 import json
 

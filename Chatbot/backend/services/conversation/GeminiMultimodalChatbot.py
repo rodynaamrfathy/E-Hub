@@ -5,10 +5,10 @@ from typing import List, Dict, Optional, Any, Union
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.schema.messages import SystemMessage, HumanMessage, AIMessage
-from services.utils.chatmessage import ChatMessage  
-from config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, get_gemini, EXA_API_KEY
-from services.conversation.session_manager import SessionManager
-from services.models.response_types import ChatResponse
+from backend.services.utils.chatmessage import ChatMessage  
+from backend.config import API_KEY, CHATBOT_MODEL, MAX_HISTORY, get_gemini, EXA_API_KEY
+from backend.services.conversation.session_manager import SessionManager
+from backend.services.models.response_types import ChatResponse
 from langchain_exa import ExaSearchRetriever
 import yaml
 from rapidfuzz import fuzz
@@ -19,8 +19,8 @@ import uuid
 import io
 import asyncio
 from PIL import Image
-from services.conversation.tools.article_retriever import article_retriever
-from services.conversation.tools.kb_rag import kb_retriever
+from backend.services.conversation.tools.article_retriever import article_retriever
+from backend.services.conversation.tools.kb_rag import kb_retriever
 
 load_dotenv()
 EXA_API = os.getenv("EXA_API")

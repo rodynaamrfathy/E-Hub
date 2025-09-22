@@ -3,14 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 import uuid
 
-from services.db.postgres import get_db_session
-from services.repositories.kb_service import KBContentService
-from services.dto.kbDTO import (
+from backend.services.db.postgres import get_db_session
+from backend.services.repositories.kb_service import KBContentService
+from backend.services.dto.kbDTO import (
     KBEntryCreateDTO,
     KBEntryUpdateDTO,
     KBEntryResponseDTO
 )
-from services.conversation.tools.KB_ingestion_pipeline import KB_IngestionPipeline
+from backend.services.conversation.tools.KB_ingestion_pipeline import KB_IngestionPipeline
 
 
 router = APIRouter(tags=["Knowledge Base"])

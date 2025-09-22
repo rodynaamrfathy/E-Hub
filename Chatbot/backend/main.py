@@ -11,16 +11,16 @@ from datetime import datetime
 from contextlib import asynccontextmanager
 
 # Database
-from services.db.postgres import db_manager
-from services.models import Base
+from backend.services.db.postgres import db_manager
+from backend.services.models import Base
 
 # Routes 
-from api.chat import router as chat_router
-from api.kb_router import router as kb_router
+from backend.api.chat import router as chat_router
+from backend.api.kb_router import router as kb_router
 
 
 from langsmith.run_helpers import traceable, get_current_run_tree
-from config import LANGSMITH_API_KEY
+from backend.config import LANGSMITH_API_KEY
 import yaml
 
 
@@ -28,7 +28,7 @@ import yaml
 from langsmith import Client
 client = Client(api_key=LANGSMITH_API_KEY)
 
-YAML_PATH = "services/utils/chatbot_prompt.yaml"
+YAML_PATH = "backend/services/utils/chatbot_prompt.yaml"
 
 
 async def load_and_save_system_prompt():

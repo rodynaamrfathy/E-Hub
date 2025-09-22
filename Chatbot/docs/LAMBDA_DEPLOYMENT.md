@@ -97,7 +97,7 @@ aws lambda update-function-configuration \
     --function-name chatbot-backend \
     --environment Variables='{
         "GOOGLE_API_KEY":"your_key_here",
-        "NEON_DATABASE_URL":"your_db_url_here",
+        "DATABASE_URL":"your_db_url_here",
         "CHATBOT_MODEL":"gemini-2.5-pro"
     }'
 ```

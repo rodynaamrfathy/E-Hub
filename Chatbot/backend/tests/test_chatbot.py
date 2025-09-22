@@ -1,4 +1,4 @@
-from services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
+from backend.services.conversation.GeminiMultimodalChatbot import GeminiMultimodalChatbot
 import os
 import re
 

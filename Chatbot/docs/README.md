@@ -21,7 +21,7 @@ A production-ready AI chatbot backend built with FastAPI, optimized for AWS Lamb
 cp env.example .env
 
 # Edit .env with your API keys and database URL
-# Required: GOOGLE_API_KEY, NEON_DATABASE_URL
+# Required: GOOGLE_API_KEY, DATABASE_URL
 ```
 
 ### 2. Development with Docker Compose

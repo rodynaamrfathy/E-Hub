@@ -2,8 +2,8 @@
 import uuid
 import json
 from .embeddermodel import embedder
-from services.db.postgres import get_db_session
-from services.repositories.kb_service import KBContentService
+from backend.services.db.postgres import get_db_session
+from backend.services.repositories.kb_service import KBContentService
 
 
 class KB_IngestionPipeline:
