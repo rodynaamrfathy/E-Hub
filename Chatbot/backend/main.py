@@ -14,9 +14,10 @@ from contextlib import asynccontextmanager
 from services.db.postgres import db_manager
 from services.models import Base
 
-# Routes 
+# Routes
 from api.chat import router as chat_router
 from api.kb_router import router as kb_router
+from api.newsletter_router import router as newsletter_router
 
 
 from langsmith.run_helpers import traceable, get_current_run_tree
@@ -130,11 +131,16 @@ app = FastAPI(
     title="Recycling & Sustainability Assistant API",
     description="AI-powered chatbot for waste management and sustainability guidance",
     version="1.0.0",
-    docs_url="/docs" if not IS_PRODUCTION else None,  # Disable docs in production
-    redoc_url="/redoc" if not IS_PRODUCTION else None,  # Disable redoc in production
-    openapi_url="/openapi.json" if not IS_PRODUCTION else None,  # Disable OpenAPI in production
-    lifespan=lifespan if not IS_LAMBDA else None,  # Disable lifespan in Lambda
+    docs_url="/docs" if not IS_PRODUCTION else None,
+    redoc_url="/redoc" if not IS_PRODUCTION else None,
+    openapi_url="/openapi.json" if not IS_PRODUCTION else None,
+    lifespan=lifespan if not IS_LAMBDA else None,
     generate_unique_id_function=lambda route: f"{route.tags[0]}-{route.name}" if route.tags else route.name,
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,
+        "tryItOutEnabled": True,
+        "persistAuthorization": True,
+    }
 )
 
 # AI instances are now imported from core.initializers
@@ -148,7 +154,11 @@ app = FastAPI(
 async def add_security_headers(request: Request, call_next):
     """Add security headers to all responses."""
     response = await call_next(request)
-    
+
+    # Skip security headers for docs in development
+    if not IS_PRODUCTION and request.url.path in ["/docs", "/redoc", "/openapi.json"]:
+        return response
+
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -402,6 +412,7 @@ async def submit_feedback(feedback: dict):
 # ----------------------------------------------------
 app.include_router(chat_router, prefix="/chat", tags=["Chat"])
 app.include_router(kb_router, prefix="/kb", tags=["KB"])
+app.include_router(newsletter_router, prefix="/newsletter", tags=["Newsletter"])
 
 #app.include_router(upload_router, prefix="/api/upload", tags=["Upload"])
 
@@ -415,4 +426,5 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
         log_level="info"
+
     )
