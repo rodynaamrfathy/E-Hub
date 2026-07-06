@@ -4,7 +4,7 @@
 
 Dawar exists to make credible sustainability information instantly accessible. Instead of forcing users to dig through fragmented resources, it combines a curated knowledge base with real-time web retrieval and Google Gemini to deliver grounded, conversational answers — and turns that same intelligence into automatically generated, category-driven newsletters.
 
-![Dawar Eco Assistant demo — identifying a plastic container from an image and explaining how to recycle it](assets/demo.jpeg)
+![Dawar Eco Assistant demo — identifying a plastic container from an image and explaining how to recycle it](Chatbot/assets/demo.jpeg)
 
 ##  Features
 
