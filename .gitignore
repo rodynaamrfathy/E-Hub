@@ -27,3 +27,4 @@ ChatbotandImageClassifier/venv
 myenv
 /Users/rodynaamr/E-Hub2/E-Hub/Chatbot/backend/config.py
 !Chatbot/postman/*.postman_collection.json
+*.yaml
